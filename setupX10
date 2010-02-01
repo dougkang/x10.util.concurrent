@@ -1,0 +1,71 @@
+#!/bin/bash
+# DO NOT EDIT - This file was automatically generated.
+
+#JAVA='/usr/lib/jvm/java-1.6.0-ibm-1.6.0.7/jre/bin/java'
+[ -n "$JAVA_HOME" ] || JAVA_HOME='${env.JAVA_HOME}'
+[ -n "$JRE_HOME" ] || JRE_HOME='/usr/lib/jvm/java-1.6.0-ibm-1.6.0.7/jre'
+#FILE_SEP='/'
+#PATH_SEP=':'
+#CONFIG_FILE='standard.cfg'
+POLYGLOT_JAR='polyglot3.jar'
+LPG_JAR='lpg.jar'
+ECJ_JAR='ecj.jar'
+POLYGLOT_URL='http://polyglot-compiler.googlecode.com/svn/trunk/updates/plugins/polyglot3_3.1.1.jar'
+LPG_URL='http://lpg.sourceforge.net/updates/plugins/lpg.runtime_2.0.17.jar'
+ECJ_URL='http://download.eclipse.org/eclipse/downloads/drops/R-3.4.1-200809111700/ecj-3.4.1.jar'
+
+UNAME=`uname -smp | sed -e 's/ /,/g'`
+FILE_SEP='/'; if [[ "$UNAME" = CYGWIN* ]]; then FILE_SEP='\\'; fi
+PATH_SEP=':'; if [[ "$UNAME" = CYGWIN* ]]; then PATH_SEP=';'; fi
+[ -n "$X10_PLATFORM" ] || \
+case "$UNAME" in
+  CYGWIN*,i*86,*) export X10_PLATFORM='win32_x86';;
+  Linux,*86*,*) export X10_PLATFORM='linux_x86';;
+  Linux,ppc*,*) export X10_PLATFORM='linux_ppc';;
+  AIX,*,powerpc) export X10_PLATFORM='aix_ppc';;
+  Darwin,*,i*86) export X10_PLATFORM='macosx_x86';;
+  Darwin,*,powerpc) export X10_PLATFORM='macosx_ppc';;
+  SunOS,*,sparc) export X10_PLATFORM='sunos_sparc';;
+  *) echo "Unrecognized platform: '$UNAME'"; exit 1;;
+esac
+# NOTE: the above assumes that Cygwin==win32 (probably valid)
+
+prog="$(readlink $0 2>&1)"
+[ $? -eq 127 -o "$prog" = "" ] && prog="$0"
+TOP="$(cd "$(dirname $prog)/.." && pwd)"
+if [[ "$UNAME" = CYGWIN* ]]; then TOP="$(cygpath -am "$TOP")"; fi
+
+if [ -n "$JAVA_HOME" -a -e "$JAVA_HOME/bin/java" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+elif [ -n "$JRE_HOME" -a -e "$JRE_HOME/bin/java" ]; then
+    JAVA="$JRE_HOME/bin/java"
+else
+    echo "JAVA_HOME ($JAVA_HOME) is not pointing to a JRE or a JDK"
+    exit 1
+fi
+if [[ "$UNAME" = CYGWIN* ]]; then JAVA="$(cygpath -au "$JAVA")"; fi
+if [[ "$UNAME" = CYGWIN* ]]; then JAVA_HOME="$(cygpath -am "$JAVA_HOME")"; fi
+
+#if ! wget --version > /dev/null 2>&amp;1; then
+#    echo >&1 "WARNING: wget is not found."
+#    echo >&1 "Please download the following files manually:"
+#    echo >&1 "../lib/$POLYGLOT_JAR <- $POLYGLOT_URL"
+#    echo >&1 "../lib/$LPG_JAR <- $LPG_URL"
+#    exit 1;
+#fi
+
+LIB_DIR="${TOP}${FILE_SEP}lib"
+
+classpath="${CP_OVERRIDE}"
+[ -n "$dev" ] && classpath="${classpath}${TOP}${FILE_SEP}..${FILE_SEP}x10.runtime${FILE_SEP}classes${PATH_SEP}"
+classpath="${classpath}${LIB_DIR}${FILE_SEP}x10.jar${PATH_SEP}${ext_cp}${extra_cp}"
+
+#command="wget -N -O \"$POLYGLOT_JAR\" \"$POLYGLOT_URL\""
+command="\"$JAVA\" -Xmx128m -classpath \"$classpath\" x10.runtime.util.HTTPGet $extargs \"$POLYGLOT_URL\" \"$LIB_DIR/$POLYGLOT_JAR\""
+eval "$command"
+#command="wget -N -O \"$LPG_JAR\" \"$LPG_URL\""
+command="\"$JAVA\" -Xmx128m -classpath \"$classpath\" x10.runtime.util.HTTPGet $extargs \"$LPG_URL\" \"$LIB_DIR/$LPG_JAR\""
+eval "$command"
+
+exit $?
+
