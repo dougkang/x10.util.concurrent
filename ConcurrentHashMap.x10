@@ -3,6 +3,9 @@
 	var declared a changeable variable, val declares an unchangeable one
 	() is used to index into an array
 	[] is used to specify a type of a multi-type class
+	git push git@github.com:dougkang/x10.util.concurrent.git to push
+	need to change all the strings to objects, or better yet, to
+		arbitrary key value variables like the HashMap underneath
 */
 
 import x10.io.Console;
@@ -104,7 +107,8 @@ class ConcurrentHashMap {
 		var index:Int = keyStr.hashCode()%numBoxes;
 		var retVal:Box[String];
 		atomic retVal = hMaps(index).get(keyStr);
-		return retVal.value();
+		if(retVal==null) return null;
+		else return retVal.value();
 	}
 	
 	//returns true if the hashmap has no elements, false otherwise
@@ -126,17 +130,62 @@ class ConcurrentHashMap {
 		return first;
 	}	
 
-	public def put(keyStr:String, valStr:String):void {
+	public def put(keyStr:String, valStr:String):String {
 		//calculates the bucket to put the data in by
 		//modding the hash value with the number of buckets
+		prevVal:String = get(keyStr);
 		var index:Int = keyStr.hashCode()%numBoxes;
 		atomic hMaps(index).put(keyStr, valStr);
 		size.incrementAndGet();
+		return prevVal;
+	}
+	
+	//putAll looks hard, so skipping it for now
+	
+	public def putIfAbsent(keyStr:String, valStr:String):String {
+		if (containsKey(keyStr)) 
+			return put(keyStr, valStr);
+		else
+			return get(keyStr);
+	}
+	
+	public def remove(keyStr:String):String {
+		var index:Int = keyStr.hashCode()%numBoxes;
+		var retVal:Box[String];
+		retVal = hMaps(index).remove(keyStr);
+		if(retVal==null) return null;
+		else return retVal.value();		
+	}
+	
+	public def remove(keyStr:String, valStr:String):Boolean {
+		var retVal:String = get(keyStr);
+		if(retVal!=null && retVal.equals(valStr)) {
+			remove(keyStr);
+			return true;
+		}
+		return false;
+	}
+	
+	public def replace(keyStr:String, valStr:String):String {
+		if (containsKey(keyStr)) {
+			return put(keyStr, valStr);
+		}
+		else return null;
+	}
+	
+	public def replace(keyStr:String, oldValStr:String, newValStr:String):Boolean {
+		if (get(keyStr).equals(oldValStr)) {
+			put(keyStr, newValStr);
+			return true;
+		}
+		else return false;
 	}
 	
 	public def size():Int {
 		return size.get();
 	}
+	
+	//values() looks like it will take some work, so I'll try to implement it later
 
 }
 
