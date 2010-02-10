@@ -66,10 +66,10 @@ class ConcurrentHashMap {
 		 // testing concurrency of the data structure
 		 
 		finish {
-		for (shared var k:Int = 0; k < 200; k++) {
-		val kk:String = k.toString();
-		async { CHMObject.put("1", kk); Console.OUT.println("Now storing " + kk); }
-		}
+			for (shared var k:Int = 0; k < 200; k++) {
+				val kk:String = k.toString();
+				async { CHMObject.put("1", kk); Console.OUT.println("Now storing " + kk); }
+			}
 		}
 		Console.OUT.println(CHMObject.get("1"));
 		 
@@ -82,8 +82,10 @@ class ConcurrentHashMap {
 		val N:Int = 5;
 		val a:Rail[Int]! = Rail.make[int](5);
 		a(1)=1;a(2)=2;a(3)=3;a(4)=4;
-		finish for((i) in 0..a.length-1) async
-		a(i) *=2;
+		finish {
+			for((i) in 0..a.length-1) 
+				async a(i) *=2;
+		}
 		Console.OUT.println("a(4)=" + a(4)); // should output 8 and not 4
 	}
 	
@@ -118,7 +120,7 @@ class ConcurrentHashMap {
 			//this needs to have an atomic in front of it
 			//just need to add safe keyword to clear method
 			//in HashMap.x10 to compile without error
-			hMaps(i).clear();
+			atomic hMaps(i).clear();
 		}
 		size.set(0);
 	}
@@ -128,8 +130,8 @@ class ConcurrentHashMap {
 	}
 	
 	public def containsValue(val:Object):Boolean {
-		var entires:Set[Map.Entry[Object, Object]]! = entrySet();
-		var iterator:Iterator[Map.Entry[Object, Object]]! = entires.iterator();
+		var entries:Set[Map.Entry[Object, Object]]! = entrySet();
+		var iterator:Iterator[Map.Entry[Object, Object]]! = entries.iterator();
 		
 		var entry:Map.Entry[Object, Object]!;
 		var curVal:Object;
@@ -199,8 +201,20 @@ class ConcurrentHashMap {
 			size.incrementAndGet();
 		return prevVal;
 	}
+
 	
-	//putAll looks hard, so skipping it for now
+	//copies all of the mappings from the specified map to this one
+	//replaces any mappings that this map had for any of the keys
+	// currently in the specified map
+	public def putAll(map:Map[Object, Object]!):void {
+		mapset:Set[Map.Entry[Object,Object]]! = map.entries();
+		
+		var iterator:Iterator[Map.Entry[Object, Object]]! = mapset.iterator();
+		while(iterator.hasNext()) {
+			var entry:Map.Entry[Object, Object]! = iterator.next();
+			put(entry.getKey(), entry.getValue());
+		}		
+	}
 	
 	public def putIfAbsent(key:Object, val:Object):Object {
 		if (containsKey(key)) 
@@ -248,6 +262,6 @@ class ConcurrentHashMap {
 		return size.get();
 	}
 	
-	//values() looks like it will take some work, so I'll try to implement it later
+	
 
 }
