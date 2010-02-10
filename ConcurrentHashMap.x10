@@ -14,13 +14,13 @@ import x10.util.concurrent.atomic.AtomicInteger;
 
 
 /**
- * The classic hello world program, shows how to output to the console.
- * @author ??
- * @author vj 
+ * ConcurrentHashMap that should perform normal hashmap functions atomically.
+ * @author Ryan Evans
+ * @author Jessica Wang
  */
 class ConcurrentHashMap {
-	//an array of non-concurrent hashmaps that store data in
-	var hMaps:Rail[HashMap[String, String]]!;
+	//an array of non-concurrent hashmaps to store data in
+	var hMaps:Rail[HashMap[Object, Object]]!;
 	//the number of non-concurrent hashmaps in the array
 	val numBoxes:Int;
 	//an atomic integer to store the total number of elements in
@@ -53,10 +53,13 @@ class ConcurrentHashMap {
 	/**/
 	public def this(var numMaps:Int) {
 		if(numMaps < 1) numMaps = 1;
-		var temp:RailBuilder[HashMap[String, String]]!
-			= new RailBuilder[HashMap[String, String]](numMaps);
+		//construct a temporary railbuilder to build
+		//our array of hashmaps
+		var temp:RailBuilder[HashMap[Object, Object]]!
+			= new RailBuilder[HashMap[Object, Object]](numMaps);
+		//initialize the array
 		for(var i:Int = 0; i<numMaps; i++) {
-			temp.add(new HashMap[String, String]());
+			temp.add(new HashMap[Object, Object]());
 		}
 		hMaps = temp.result();
 		size = new AtomicInteger(0);
@@ -87,26 +90,25 @@ class ConcurrentHashMap {
 	//skipping elements() for now because I don't know what an enumeration is
 	
 	//returns true if the key is stored in a hashmap, false otherwise
-	public def containsKey(var key:String):Boolean{
-		var hash:Int = key.hashCode()%numBoxes;
+	public def containsKey(var key:Object):Boolean{
+		val hash:Int = key.hashCode()%numBoxes;
 		return hMaps(hash).containsKey(key);
 	}
 	
 	//returns a Set with all the entires from all the HashMaps in it
-	public def entrySet():Set[Map.Entry[String,String]] {
-		first:Set[Map.Entry[String,String]]! = hMaps(0).entries();
+	public def entrySet():Set[Map.Entry[Object,Object]] {
+		first:Set[Map.Entry[Object,Object]]! = hMaps(0).entries();
 		for(var i:Int = 1; i<numBoxes; i++) {
 			first.addAll(hMaps(i).entries());
 		}
 		return first;
 	}
 	
-	//returns the value attached to the string
-	//need to check retval for null before calling retValue.value()
-	public def get(keyStr:String):String {
-		var index:Int = keyStr.hashCode()%numBoxes;
-		var retVal:Box[String];
-		atomic retVal = hMaps(index).get(keyStr);
+	//returns the value attached to the key
+	public def get(key:Object):Object {
+		val index:Int = key.hashCode()%numBoxes;
+		var retVal:Box[Object];
+		atomic retVal = hMaps(index).get(key);
 		if(retVal==null) return null;
 		else return retVal.value();
 	}
@@ -122,60 +124,64 @@ class ConcurrentHashMap {
 	//skipping keys() for now because I don't know what an enumeration is
 	
 	//returns a Set with all the keys from all the HashMaps in it
-	public def keySet():Set[String] {
-		first:Set[String]! = hMaps(0).keySet();
+	public def keySet():Set[Object] {
+		first:Set[Object]! = hMaps(0).keySet();
 		for(var i:Int = 1; i<numBoxes; i++) {
 			first.addAll(hMaps(i).keySet());
 		}
 		return first;
 	}	
 
-	public def put(keyStr:String, valStr:String):String {
+	public def put(key:Object, val:Object):Object {
 		//calculates the bucket to put the data in by
 		//modding the hash value with the number of buckets
-		prevVal:String = get(keyStr);
-		var index:Int = keyStr.hashCode()%numBoxes;
-		atomic hMaps(index).put(keyStr, valStr);
-		size.incrementAndGet();
+		prevVal:Object = get(key);
+		var index:Int = key.hashCode()%numBoxes;
+		atomic hMaps(index).put(key, val);
+		if(prevVal==null)
+			size.incrementAndGet();
 		return prevVal;
 	}
 	
 	//putAll looks hard, so skipping it for now
 	
-	public def putIfAbsent(keyStr:String, valStr:String):String {
-		if (containsKey(keyStr)) 
-			return put(keyStr, valStr);
+	public def putIfAbsent(key:Object, val:Object):Object {
+		if (containsKey(key)) 
+			return put(key, val);
 		else
-			return get(keyStr);
+			return get(key);
 	}
 	
-	public def remove(keyStr:String):String {
-		var index:Int = keyStr.hashCode()%numBoxes;
-		var retVal:Box[String];
-		retVal = hMaps(index).remove(keyStr);
+	public def remove(key:Object):Object {
+		val index:Int = key.hashCode()%numBoxes;
+		val retVal:Box[Object];
+		retVal = hMaps(index).remove(key);
 		if(retVal==null) return null;
-		else return retVal.value();		
+		else {
+			size.decrementAndGet();
+			return retVal.value();
+		}
 	}
 	
-	public def remove(keyStr:String, valStr:String):Boolean {
-		var retVal:String = get(keyStr);
-		if(retVal!=null && retVal.equals(valStr)) {
-			remove(keyStr);
+	public def remove(key:Object, val:Object):Boolean {
+		val retVal:Object = get(key);
+		if(retVal!=null && retVal.equals(val)) {
+			remove(key);
 			return true;
 		}
 		return false;
 	}
 	
-	public def replace(keyStr:String, valStr:String):String {
-		if (containsKey(keyStr)) {
-			return put(keyStr, valStr);
+	public def replace(key:Object, val:Object):Object {
+		if (containsKey(key)) {
+			return put(key, val);
 		}
 		else return null;
 	}
 	
-	public def replace(keyStr:String, oldValStr:String, newValStr:String):Boolean {
-		if (get(keyStr).equals(oldValStr)) {
-			put(keyStr, newValStr);
+	public def replace(key:Object, oldVal:Object, newVal:Object):Boolean {
+		if (get(key).equals(oldVal)) {
+			put(key, newVal);
 			return true;
 		}
 		else return false;
@@ -188,5 +194,3 @@ class ConcurrentHashMap {
 	//values() looks like it will take some work, so I'll try to implement it later
 
 }
-
-
