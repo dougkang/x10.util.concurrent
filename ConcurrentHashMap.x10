@@ -35,17 +35,33 @@ class ConcurrentHashMap {
 		CHMObject.put("1", "jim");
 		CHMObject.put("2", "edwards");		
 		
-		Console.OUT.println(CHMObject.get("1"));
-		Console.OUT.println(CHMObject.get("2"));
-		Console.OUT.println("The size is " + CHMObject.size());
+		if(CHMObject.get("1").equals("jim")) Console.OUT.println("success");
+		else Console.OUT.println("failure");
+
+		if(CHMObject.get("2").equals("edwards")) Console.OUT.println("success");
+		else Console.OUT.println("failure");
+
+		if(CHMObject.size() == 2)  Console.OUT.println("success");
+		else Console.OUT.println("failure");
 		
-		if(CHMObject.isEmpty()) Console.OUT.println("Is Empty");
-		else Console.OUT.println("Is not Empty.");
+		if(CHMObject.isEmpty()) Console.OUT.println("failure");
+		else Console.OUT.println("success");
+		
+		if(CHMObject.containsKey("1")) Console.OUT.println("success");
+		else Console.OUT.println("failure");
+		
+		if(CHMObject.containsKey("3")) Console.OUT.println("failure");
+		else  Console.OUT.println("success");
+		
+		CHMObject.remove("1");
+		
+		if(CHMObject.containsKey("1")) Console.OUT.println("failure");
+		else Console.OUT.println("success");
 	
 		CHMObject.clear();
 	
-		if(CHMObject.isEmpty()) Console.OUT.println("Is Empty");
-		else Console.OUT.println("Is not Empty.");
+		if(CHMObject.isEmpty()) Console.OUT.println("success");
+		else Console.OUT.println("failure");
 	}
 	
 
@@ -84,20 +100,38 @@ class ConcurrentHashMap {
 		size.set(0);
 	}
 
-	//can't do contains() or containsValue() because underlying hashmap
-	//does not implement those functions
+	public def contains(val:Object):Boolean {
+		return containsValue(val);
+	}
+	
+	public def containsValue(val:Object):Boolean {
+		var entires:Set[Map.Entry[Object, Object]]! = entrySet();
+		var iterator:Iterator[Map.Entry[Object, Object]]! = entires.iterator();
+		
+		var entry:Map.Entry[Object, Object]!;
+		var curVal:Object;
+		while(iterator.hasNext()) {
+			entry = iterator.next();
+			curVal = entry.getValue();
+			if(val.equals(curVal))
+				return true;
+		}		
+		return false;
+	}
 
 	//skipping elements() for now because I don't know what an enumeration is
 	
 	//returns true if the key is stored in a hashmap, false otherwise
 	public def containsKey(var key:Object):Boolean{
-		val hash:Int = key.hashCode()%numBoxes;
-		return hMaps(hash).containsKey(key);
+		atomic {
+			val hash:Int = key.hashCode()%numBoxes;
+			return hMaps(hash).containsKey(key);
+		}
 	}
 	
 	//returns a Set with all the entires from all the HashMaps in it
 	public def entrySet():Set[Map.Entry[Object,Object]] {
-		first:Set[Map.Entry[Object,Object]]! = hMaps(0).entries();
+		var first:Set[Map.Entry[Object,Object]]! = hMaps(0).entries();
 		for(var i:Int = 1; i<numBoxes; i++) {
 			first.addAll(hMaps(i).entries());
 		}
