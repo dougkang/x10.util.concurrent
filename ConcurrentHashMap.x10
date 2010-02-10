@@ -3,6 +3,8 @@
 	var declared a changeable variable, val declares an unchangeable one
 	() is used to index into an array
 	[] is used to specify a type of a multi-type class
+	git add files
+	git commit -m "COMMENTS"
 	git push git@github.com:dougkang/x10.util.concurrent.git to push
 	need to change all the strings to objects, or better yet, to
 		arbitrary key value variables like the HashMap underneath
@@ -18,6 +20,7 @@ import x10.util.concurrent.atomic.AtomicInteger;
  * @author Ryan Evans
  * @author Jessica Wang
  */
+
 class ConcurrentHashMap {
 	//an array of non-concurrent hashmaps to store data in
 	var hMaps:Rail[HashMap[Object, Object]]!;
@@ -26,11 +29,11 @@ class ConcurrentHashMap {
 	//an atomic integer to store the total number of elements in
 	//the array of non-concurrent hashmaps
 	var size:AtomicInteger;
-	
+
 	static DEFAULT_NUM_BOXES:Int = 16;
 	
-	public static def main(args:Rail[String]):void {
-		var CHMObject:ConcurrentHashMap! = new ConcurrentHashMap();
+	public static def main(args:Rail[String]!):void {
+		shared val CHMObject:ConcurrentHashMap! = new ConcurrentHashMap();
 
 		CHMObject.put("1", "jim");
 		CHMObject.put("2", "edwards");		
@@ -46,8 +49,31 @@ class ConcurrentHashMap {
 	
 		if(CHMObject.isEmpty()) Console.OUT.println("Is Empty");
 		else Console.OUT.println("Is not Empty.");
+
+
+		// testing concurrency of the data structure
+
+		finish {
+			for (shared var k:Int = 0; k < 200; k++) {
+				val kk:String = k.toString();
+				async { CHMObject.put("1", kk); Console.OUT.println("Now storing " + kk); }
+			}
+		}
+		Console.OUT.println(CHMObject.get("1"));
+
+		CHMObject.put("1", "40");
+		Console.OUT.println(CHMObject.get("1"));
+
+
+		// testing concurrency example in general
+
+		val N:Int = 5;
+		val a:Rail[Int]! = Rail.make[int](5);
+		a(1)=1;a(2)=2;a(3)=3;a(4)=4;
+		finish for((i) in 0..a.length-1) async
+			a(i) *=2;
+		Console.OUT.println("a(4)=" + a(4)); // should output 8 and not 4
 	}
-	
 
 	/*Constructors*/
 	/**/
