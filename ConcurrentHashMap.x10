@@ -30,7 +30,7 @@ class ConcurrentHashMap {
 	static DEFAULT_NUM_BOXES:Int = 16;
 	
 	public static def main(args:Rail[String]):void {
-		var CHMObject:ConcurrentHashMap! = new ConcurrentHashMap();
+		shared val CHMObject:ConcurrentHashMap! = new ConcurrentHashMap();
 
 		CHMObject.put("1", "jim");
 		CHMObject.put("2", "edwards");		
@@ -62,6 +62,29 @@ class ConcurrentHashMap {
 	
 		if(CHMObject.isEmpty()) Console.OUT.println("success");
 		else Console.OUT.println("failure");
+		
+		 // testing concurrency of the data structure
+		 
+		finish {
+		for (shared var k:Int = 0; k < 200; k++) {
+		val kk:String = k.toString();
+		async { CHMObject.put("1", kk); Console.OUT.println("Now storing " + kk); }
+		}
+		}
+		Console.OUT.println(CHMObject.get("1"));
+		 
+		CHMObject.put("1", "40");
+		Console.OUT.println(CHMObject.get("1"));
+		 
+		 
+		// testing concurrency example in general
+		 
+		val N:Int = 5;
+		val a:Rail[Int]! = Rail.make[int](5);
+		a(1)=1;a(2)=2;a(3)=3;a(4)=4;
+		finish for((i) in 0..a.length-1) async
+		a(i) *=2;
+		Console.OUT.println("a(4)=" + a(4)); // should output 8 and not 4
 	}
 	
 
