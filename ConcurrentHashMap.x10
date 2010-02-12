@@ -52,15 +52,30 @@ else Console.OUT.println("Is not Empty.");
  
  
 // testing concurrency of the data structure
-for(var i:Int = 0; i < 50; i++) {
 finish {
-for (shared var k:Int = 0; k < 200; k++) {
-val kk:String = k.toString();
-async { CHMObject.put("1", kk); Console.OUT.println("Now storing " + kk); }
+	for(var i:Int = 0; i < 500; i++) {
+		if((i%2)==0) {
+		async {
+			for (shared var k:Int = 0; k < 200; k++) {
+				val kk:String = k.toString();
+				async CHMObject.put("1", kk);
+				async CHMObject.put("2", kk);
+				async CHMObject.put("2", "3");
+			}
+		}
+		}
+		else {
+		async {
+			for (shared var k:Int = 0; k < 200; k++) {
+				async CHMObject.remove("1");
+				async CHMObject.remove("2");
+			}
+		}
+		}
+		
+	}
 }
-}
-Console.OUT.println("Completed " + i);
-}
+
 Console.OUT.println(CHMObject.get("1"));
  
 CHMObject.put("1", "40");
