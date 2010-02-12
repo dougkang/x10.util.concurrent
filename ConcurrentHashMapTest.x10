@@ -35,23 +35,50 @@ class ConcurrentHashMapTest {
 		testObject.testPutIfAbsent();
 		testObject.testRemove();
 		testObject.testSize();
+		testObject.testConcurrency();
 	}
  
 	private def map5():ConcurrentHashMap {
 	    var map:ConcurrentHashMap! = new ConcurrentHashMap(5);
-        map.put("one", "A");
-        map.put("two", "B");
-        map.put("three", "C");
-        map.put("four", "D");
-        map.put("five", "E");
-        return map;
+        	map.put("one", "A");
+        	map.put("two", "B");
+        	map.put("three", "C");
+        	map.put("four", "D");
+        	map.put("five", "E");
+        	return map;
 	}
+
+    /**
+     * Concurrency demo
+     */
+   public def testConcurrency():void {
+    	map = map5();
+        finish {
+
+		for(shared var k: Int = 0; k < 100; k++) {
+			val kk:String = k.toString();
+			async { 
+				map.put("one", kk); 
+				Console.OUT.println("Now storing " + kk + " into key \"one\"");
+			}
+			
+		}
+		for(shared var k: Int = 0; k < 100; k++) {
+			async { 
+				Console.OUT.println("Now retrieving " + map.get("one"));
+			}
+			
+		}
+	}
+	Console.OUT.println(map.get("one"));
+    }
+    
     /**
      *  clear removes all pairs
      */
     public def testClear():void {
-        map = map5();
-        map.clear();
+     	   map = map5();
+     	   map.clear();
         if(map.size() == 0) Console.OUT.println("PASSED: testClear()");
         else Console.OUT.println("FAILED: testClear()");
     }
