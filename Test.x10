@@ -38,4 +38,11 @@ class Test {
         + " to be null.");
     }
   }
+
+  static public def assertNotNull(obj:Object) {
+    if (obj == null) {
+      throw new Error("Assertion failure: Expected " + obj.toString()
+        + " to not be null.");
+    }
+  }
 }
