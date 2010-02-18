@@ -13,7 +13,7 @@ arbitrary key value variables like the HashMap underneath
 import x10.io.Console;
 import x10.util.*;
 import x10.util.concurrent.atomic.AtomicInteger;
- 
+import x10.lang.*;
  
 /**
  * ConcurrentSkipListMap that should perform map functions atomically.
@@ -21,9 +21,15 @@ import x10.util.concurrent.atomic.AtomicInteger;
  * @author Jessica Wang
  */
  
-public class ConcurrentSkipListMap {
+public class ConcurrentSkipListMap[K,V] {
 
 	private static val BASE_HEADER: Object = new Object();
+
+	/**
+	 * The topmost head index of the skiplist.
+     	 */
+    	private var head: HeadIndex[K, V];
+
 
 
 	/* --------------------- Node ----------------------*/
@@ -205,6 +211,212 @@ public class ConcurrentSkipListMap {
 			this.level = level;
 		}
 	}
+
+	/* --------------------- Comparison Utilities ----------------------*/
+
+	/**
+	 * Represents a key with a comparator as a Comparable.
+	 * SKIPPPPPPPPPPPPPPPPPPPPPPP
+     	 */
+	
+	/*static final class ComparableUsingComparator[K] implements Comparable[K] {
+        	val actualKey: Box[K];
+        	val cmp: Comparator[? super K];
+        
+		public def this (key: K, cmp: Comparator[? super K]) {
+	        	this.actualKey = key;
+		        this.cmp = cmp;
+        	}
+        	public def compareTo(K k2): Int {
+            		return cmp.compare(actualKey, k2);
+        	}
+    	}*/
+
+	/**
+     	 * If using comparator, return a ComparableUsingComparator, else
+     	 * cast key as Comparable, which may cause ClassCastException,
+     	 * which is propagated back to caller.
+     	 */
+    	private def comparable(key: Object) : Comparable[K] throws ClassCastException  {
+        	if (key == null)
+       			throw new NullPointerException();
+        	//if (comparator != null)
+            	//	return new ComparableUsingComparator<K>((K)key, comparator);
+        	//else
+            		return key as Comparable[K];
+    	}
+
+	/**
+    	 * Compares using comparator or natural ordering. Used when the
+	 * ComparableUsingComparator approach doesn't apply.
+     	 */
+    	public def compare(k1: Box[K], k2: Box[K]): Int throws ClassCastException {
+    	        	return 0;
+    	}
+
+	/**
+     	 * Returns true if given key greater than or equal to least and
+     	 * strictly less than fence, bypassing either test if least or
+     	 * fence are null. Needed mainly in submap operations.
+     	 */
+    	public def inHalfOpenRange(key: Box[K], least: Box[K], fence: Box[K]): Boolean {
+	        if (key == null)
+        		throw new NullPointerException();
+        	return ((least == null || compare(key, least) >= 0) &&
+                	(fence == null || compare(key, fence) <  0));
+    	}
+
+	/**
+         * Returns true if given key greater than or equal to least and less
+         * or equal to fence. Needed mainly in submap operations.
+         */
+    	public def inOpenRange(key: Box[K], least: Box[K], fence: Box[K]): Boolean {
+        	if (key == null)
+            		throw new NullPointerException();
+	        return ((least == null || compare(key, least) >= 0) &&
+        	        (fence == null || compare(key, fence) <= 0));
+    	}
+
+	/* --------------------- Traversal ----------------------*/
+
+	/**
+         * Returns a base-level node with key strictly less than given key,
+     	 * or the base-level header if there is no such node.  Also
+         * unlinks indexes to deleted nodes found along the way.  Callers
+         * rely on this side-effect of clearing indices to deleted nodes.
+         * @param key the key
+         * @return a predecessor of key
+         */
+    	private def findPredecessor(key: Comparable[K]!): Node[K, V] { // FIX THIS HERE
+        	if (key == null)
+            		throw new NullPointerException(); // don't postpone errors
+        	for (;;) {
+            		var q: Index[K,V]! = head;
+		        var r: Index[K,V]! = q.right;
+            		
+			for (;;) {
+		                if (r != null) {
+                    			var n: Node[K,V]! = r.node;
+		  	                var k: K = n.key.value;
+                    
+					if (n.value == null) {
+                        			if (!q.unlink(r))
+                            				break;       // restart
+				                r = q.right;         // reread r
+                        			continue;
+                    			}
+  		                        if (key.compareTo(k) > 0) {
+                        			q = r;
+			                        r = r.right;
+                        			continue;
+                    			}
+                		}
+                		var d: Index[K,V]! = q.down;
+		                if (d != null) {
+                		    q = d;
+                		    r = d.right;
+                		} else
+            			        return q.node;
+           	 	}
+        	}	
+    	}
+
+
+       /*
+        * @param key the key
+        * @return node holding key, or null if no such
+        */
+	private def findNode(key: Comparable[K]!): Node[K,V] {
+        	for (;;) {
+            		var b: Node[K,V]! = findPredecessor(key);
+		        var n: Node[K,V]! = b.next;
+	        	for (;;) {
+        		        if (n == null)
+        		        	return null;
+
+		                var f: Node[K,V] = n.next;
+                		if (n != b.next)                // inconsistent read
+                    			break;
+                		var v: Object = n.value;
+                		if (v == null) {                // n is deleted
+                    			n.helpDelete(b, f);
+                    			break;
+                		}
+                		if (v == n || b.value == null)  // b is deleted
+                    			break;
+                		var c: Int = key.compareTo(n.key.value);
+                		if (c == 0)
+                    			return n;
+                		else if (c < 0)
+                    			return null;
+                		b = n;
+                		n = f;
+            		}
+        	}
+    	}
+
+	private def doGet(okey: Object): V {
+        	var key: Comparable[K]! = comparable(okey);
+        	var bound: Node[K,V] = null;
+        	var q: Index[K,V]! = head;
+        	var r: Index[K,V]! = q.right;
+	        var n: Node[K,V]!;
+        	var k: K;
+        	var c: Int;
+        
+		for (;;) {
+	        	var d: Index[K,V]!;
+	            	// Traverse rights
+            		if (r != null && (n = r.node) != bound && n.key != null) {
+				k = n.key.value;
+                		if ((c = key.compareTo(k)) > 0) {
+                    			q = r;
+                    			r = r.right;
+                    			continue;
+                		} else if (c == 0) {
+                    			var v: Object = n.value;
+                    			return (v != null)? v as V: getUsingFindNode(key);
+                		} else
+                    			bound = n;
+            		}
+
+            		// Traverse down
+            		if ((d = q.down) != null) {
+               			q = d;
+               			r = d.right;
+            		} else
+               			break;
+       		}
+
+       		// Traverse nexts
+       		for (n = q.node.next;  n != null; n = n.next) {
+       			if (n.key != null) {
+				k = n.key.value;
+       				if ((c = key.compareTo(k)) == 0) {
+               				var v: Object = n.value;
+				        return (v != null)? v as V: getUsingFindNode(key);
+               			} else if (c < 0)
+               				break;
+       			}
+       		}
+       		return null as V;
+    	}
+
+ 	private def getUsingFindNode(key: Comparable[K]):V {
+        /*
+         * Loop needed here and elsewhere in case value field goes
+         * null just as it is about to be returned, in which case we
+         * lost a race with a deletion, so must retry.
+         */
+        	for (;;) {
+            		var n: Node[K,V]! = findNode(key);
+            		if (n == null)
+                		return null as V;
+            		var v: Object = n.value;
+           		if (v != null)
+                		return v as V;
+        	}
+    	}
 
 	public static def main(args: Rail[String]!) {
 		var test: Node[Int, Int]! = null ;
