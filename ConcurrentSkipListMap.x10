@@ -30,7 +30,11 @@ public class ConcurrentSkipListMap[K,V] {
      	 */
     	private var head: HeadIndex[K, V];
 
-
+    	/**
+     	 * Seed for simple random number generator.  Not volatile since it
+     	 * doesn't matter too much if different threads don't see updates.
+     	 */
+//	private transient var randomSeed: int;
 
 	/* --------------------- Node ----------------------*/
 
@@ -417,6 +421,75 @@ public class ConcurrentSkipListMap[K,V] {
                 		return v as V;
         	}
     	}
+
+    	/* ---------------- Insertion -------------- */
+
+    	/**
+     	 * Main insertion method.  Adds element if not present, or
+     	 * replaces value if present and onlyIfAbsent is false.
+     	 * @param kkey the key
+     	 * @param value  the value that must be associated with key
+     	 * @param onlyIfAbsent if should not insert if already present
+     	 * @return the old value, or null if newly inserted
+     	 
+    	private def doPut(kkey: K, value: V, onlyIfAbsent: boolean) : V {
+        	var key: Comparable[K]! = comparable(kkey);
+        	for (;;) {
+            		var b: Node[K,V]! = findPredecessor(key);
+            		var n: Node[K,V]! = b.next;
+            		for (;;) {
+                		if (n != null) {
+                    			var f: Node[K,V]! = n.next;
+                    			if (n != b.next)               // inconsistent read
+                        			break;;
+                    			var v: Object = n.value;
+                    			if (v == null) {               // n is deleted
+                        			n.helpDelete(b, f);
+                        			break;
+                    			}
+                    			if (v == n || b.value == null) // b is deleted
+                        			break;
+                    			var c: int! = key.compareTo(n.key);
+                    			if (c > 0) {
+                        			b = n;
+                        			n = f;
+                        			continue;
+                    			}
+                    			if (c == 0) {
+                        			if (onlyIfAbsent || n.casValue(v, value))
+                            				return v as V;
+                        			else
+                            				break; // restart if lost race to replace value
+                    			}
+                    			// else c < 0; fall through
+                		}
+
+                		var z: Node[K,V]! = new Node[K,V](kkey, value, n);
+                		if (!b.casNext(n, z))
+                    			break;         // restart if lost race to append to b
+                		//var level: int! = randomLevel();
+				var level: int! = 4;
+                		if (level > 0)
+                    			insertIndex(z, level);
+                		return null as V;
+            		}
+        	}
+    	} */
+
+    	/**
+     	 * Returns a random level for inserting a new node.
+     	 
+    	private def randomLevel() : int {
+        	var x: int! = randomSeed;
+        	x ^= x << 13;
+        	x ^= x >>> 17;
+        	randomSeed = x ^= x << 5;
+        	if ((x & 0x8001) != 0) // test highest and lowest bits
+            		return 0;
+        	var level: int = 1;
+        	while (((x >>>= 1) & 1) != 0) ++level;
+        	return level;
+    	} */
 
 	public static def main(args: Rail[String]!) {
 		var test: Node[Int, Int]! = null ;
