@@ -55,7 +55,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * clear, readObject. and ConcurrentSkipListSet.clone.
      	 * (Note that comparator must be separately initialized.)
      	 */
-    	private final def initialize():void {
+    	private proto def initialize() : void {
         	//keySet = null;
         	//entrySet = null;
         	//values = null;
@@ -171,11 +171,11 @@ public class ConcurrentSkipListMap[K,V] {
 		 * the value to be returned is the node's value if it isn't a marker or header
                  * or is deleted.
 		 */
-		public def getValidValue() : V {
+		public def getValidValue() : Object {
 			var v: Object = value;
 			if(v == this || v == BASE_HEADER)
-				return null as V;
-			return v as V;
+				return null;
+			return v;
 		}
 
         	/**
@@ -754,6 +754,71 @@ public class ConcurrentSkipListMap[K,V] {
             			casHead(d, h);   // try to backout
     	}
 
+	/* ---------------- Finding and removing first element -------------- */
+
+	/**
+     	 * Specialized variant of findNode to get first valid node.
+     	 * @return first node or null if empty
+     	 */
+    	def findFirst() : Node[K,V] {
+        	for (;;) {
+            		var b: Node[K,V]! = head.node;
+            		var n: Node[K,V]! = b.next;
+            		if (n == null)
+                		return null;
+            		if (n.value != null)
+                		return n;
+            		n.helpDelete(b, n.next);
+        	}
+    	}
+
+    	/**
+     	 * Removes first entry; returns its snapshot.
+     	 * @return null if empty, else snapshot of first entry
+     	 */
+   	 def doRemoveFirstEntry() : Map.Entry[K,V]  {
+        	for (;;) {
+            		var b: Node[K,V]! = head.node;
+            		var n: Node[K,V]! = b.next;
+            		if (n == null)
+                		return null;
+            		var f: Node[K,V] = n.next;
+            		if (n != b.next)
+                		continue;
+            		var v: Object = n.value;
+		        if (v == null) {
+                		n.helpDelete(b, f);
+                		continue;
+            		}
+            		if (!n.casValue(v, null))
+                		continue;
+            		if (!n.appendMarker(f) || !b.casNext(n, f))
+                		findFirst(); // retry
+            		clearIndexToFirst();
+            		//return new SimpleImmutableEntry[K,V](n.key, v); VINCENT!! SKIPPP THIS FIX THIS!
+			return null;
+		}
+    	}
+
+    	/**
+     	 * Clears out index nodes associated with deleted first entry.
+     	 */
+    	private def clearIndexToFirst() : void {
+        	for (;;) {
+            		var q: Index[K,V]! = head;
+            		for (;;) {
+                		var r: Index[K,V]! = q.right;
+                		if (r != null && r.indexesDeletedNode() && !q.unlink(r))
+                    			break;
+                		if ((q = q.down) == null) {
+                    			if (head.right == null)
+                        			tryReduceLevel();
+                    			return;
+               			 }
+           		}
+       		 }
+   	 }
+
     	/* ---------------- Finding and removing last element -------------- */
 
     	/**
@@ -932,27 +997,28 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @return Entry fitting relation, or null if no such
 	 * FIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
      	 */
-    	 /*public def getNear(key: Object, rel: Int) : SimpleImmutableEntry[K,V] {
+    	 public def getNear(key: Object, rel: Int) : SimpleImmutableEntry[K,V] {
         	for (;;) {
             		var n: Node[K,V]! = findNear(key, rel);
             		if (n == null)
                 		return null;
-            		var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
-            		if (e != null)
-                		return e;
+            		//var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
+            		//if (e != null)
+                	//	return e;
+			return null;
         	}
-    	}*/
+    	}
 
     	/* ---------------- Constructors -------------- */
 
     	/**
      	 * Constructs a new, empty map, sorted according to the
      	 * {@linkplain Comparable natural ordering} of the keys.
-     	 *
+     	 */
     	public def this() {
         	this.comparator = null;
         	initialize();
-    	} */
+    	} 
 
     	/**
      	 * Constructs a new, empty map, sorted according to the specified
@@ -961,7 +1027,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @param comparator the comparator that will be used to order this map.
      	 *        If <tt>null</tt>, the {@linkplain Comparable natural
     	 *        ordering} of the keys will be used.
-     	 *
+     	 */
     	public def this(comparator: Comparator[K]) {
         	this.comparator = comparator;
         	initialize();
@@ -977,12 +1043,12 @@ public class ConcurrentSkipListMap[K,V] {
      	 *         {@link Comparable}, or are not mutually comparable
      	 * @throws NullPointerException if the specified map or any of its keys
      	 *         or values are null
-     	 *
+     	 */
     	public def this(m: Map[K, V]) {
         	this.comparator = null;
         	initialize();
         	putAll(m);
-    	} */
+    	}
 
     	/**
      	 * Constructs a new map containing the same mappings and using the
@@ -992,39 +1058,39 @@ public class ConcurrentSkipListMap[K,V] {
      	 *        map, and whose comparator is to be used to sort this map
      	 * @throws NullPointerException if the specified sorted map or any of
      	 *         its keys or values are null
-     	 *
-    	public def this(m: SortedMap[K, ? extends V]) {
-        	this.comparator = m.comparator();
-        	initialize();
-        	buildFromSorted(m);
-    	} */
+	 * NOT IMPLEMENTED SINCE SortedMap is not implemented in x10
+	 * Users will not need this constructor
+     	 */
 
     	/**
      	 * Returns a shallow copy of this <tt>ConcurrentSkipListMap</tt>
      	 * instance. (The keys and values themselves are not cloned.)
      	 *
      	 * @return a shallow copy of this map
-     	 *
+     	 */
     	public def clone() : ConcurrentSkipListMap[K,V] {
-        	clone: ConcurrentSkipListMap[K,V] = null;
-        	try {
-            		clone = super.clone() as ConcurrentSkipListMap[K,V];
-        	} catch (e: CloneNotSupportedException) {
-            		throw new InternalError();
-        	}
+        	clone: ConcurrentSkipListMap[K,V]! = null;
+        	
+		//Not implemented in x10, also seems rather unecessary
+		//since clone method just sets value fields in super to null
+		//try {
+            	//	clone = super.clone() as ConcurrentSkipListMap[K,V];
+        	//} catch (e: IllegalOperationException) {
+            	//	throw new IllegalOperationException();
+        	//}
 
         	clone.initialize();
         	clone.buildFromSorted(this);
         	return clone;
-    	} */
+    	}
 
     	/**
      	 * Streamlined bulk insertion to initialize from elements of
      	 * given sorted map.  Call only from constructor or clone
      	 * method.
-     	 *
-    	private def buildFromSorted(map: SortedMap[K, V]) : void {
-        	if (map == null)
+     	 */
+    	private def buildFromSorted(map: ConcurrentSkipListMap[K, V]) : void {
+        	/*if (map == null)
             		throw new NullPointerException();
 
         	var h: HeadIndex[K,V] = head;
@@ -1071,8 +1137,398 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
             		}
         	}
-        	head = h;
-    	} */
+        	head = h;*/
+    	} 
+
+	/**
+	 *
+	 * Method that is supposed to be inherited from AbstractMap class
+	 * Implemented here because AbstractMap does not exist in x10
+	 */
+	public proto def putAll(m: Map[K,V]) : void {
+        	//for (e: Map.Entry[K,V] e : m.entrySet())
+        	//	put(e.getKey(), e.getValue());
+    	}
+
+	/* ---------------- Serialization -------------- */
+	// Not implemented because writeObject is not available in x10
+	// No ObjectStreams
+	    /**
+	     * Save the state of this map to a stream.
+	     *
+	     * @serialData The key (Object) and value (Object) for each
+	     * key-value mapping represented by the map, followed by
+	     * <tt>null</tt>. The key-value mappings are emitted in key-order
+	     * (as determined by the Comparator, or by the keys' natural
+	     * ordering if no Comparator).
+	     *
+	    private void writeObject(java.io.ObjectOutputStream s)
+		throws java.io.IOException {
+		// Write out the Comparator and any hidden stuff
+		s.defaultWriteObject();
+
+		// Write out keys and values (alternating)
+		for (Node<K,V> n = findFirst(); n != null; n = n.next) {
+		    V v = n.getValidValue();
+		    if (v != null) {
+		        s.writeObject(n.key);
+		        s.writeObject(v);
+		    }
+		}
+		s.writeObject(null);
+	    }
+
+	    /**
+	     * Reconstitute the map from a stream.
+	     *
+	    private void readObject(final java.io.ObjectInputStream s)
+		throws java.io.IOException, ClassNotFoundException {
+		// Read in the Comparator and any hidden stuff
+		s.defaultReadObject();
+		// Reset transients
+		initialize();
+
+		/*
+		 * This is nearly identical to buildFromSorted, but is
+		 * distinct because readObject calls can't be nicely adapted
+		 * as the kind of iterator needed by buildFromSorted. (They
+		 * can be, but doing so requires type cheats and/or creation
+		 * of adaptor classes.) It is simpler to just adapt the code.
+		 *
+
+		HeadIndex<K,V> h = head;
+		Node<K,V> basepred = h.node;
+		ArrayList<Index<K,V>> preds = new ArrayList<Index<K,V>>();
+		for (int i = 0; i <= h.level; ++i)
+		    preds.add(null);
+		Index<K,V> q = h;
+		for (int i = h.level; i > 0; --i) {
+		    preds.set(i, q);
+		    q = q.down;
+		}
+
+		for (;;) {
+		    Object k = s.readObject();
+		    if (k == null)
+		        break;
+		    Object v = s.readObject();
+		    if (v == null)
+		        throw new NullPointerException();
+		    K key = (K) k;
+		    V val = (V) v;
+		    int j = randomLevel();
+		    if (j > h.level) j = h.level + 1;
+		    Node<K,V> z = new Node<K,V>(key, val, null);
+		    basepred.next = z;
+		    basepred = z;
+		    if (j > 0) {
+		        Index<K,V> idx = null;
+		        for (int i = 1; i <= j; ++i) {
+		            idx = new Index<K,V>(z, idx, null);
+		            if (i > h.level)
+		                h = new HeadIndex<K,V>(h.node, h, idx, i);
+
+		            if (i < preds.size()) {
+		                preds.get(i).right = idx;
+		                preds.set(i, idx);
+		            } else
+		                preds.add(idx);
+		        }
+		    }
+		}
+		head = h;
+	    }*/
+
+	/* ------ Map API methods ------ */
+
+    	/**
+     	 * Returns <tt>true</tt> if this map contains a mapping for the specified
+     	 * key.
+     	 *
+     	 * @param key key whose presence in this map is to be tested
+     	 * @return <tt>true</tt> if this map contains a mapping for the specified key
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def containsKey(key: Object) : Boolean {
+        	return doGet(key) != null;
+    	}
+
+    	/**
+     	 * Returns the value to which the specified key is mapped,
+      	 * or {@code null} if this map contains no mapping for the key.
+     	 *
+     	 * <p>More formally, if this map contains a mapping from a key
+     	 * {@code k} to a value {@code v} such that {@code key} compares
+     	 * equal to {@code k} according to the map's ordering, then this
+     	 * method returns {@code v}; otherwise it returns {@code null}.
+     	 * (There can be at most one such mapping.)
+     	 *
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def get(key: Object) : V {
+        	return doGet(key);
+    	}
+
+	/**
+     	 * Associates the specified value with the specified key in this map.
+     	 * If the map previously contained a mapping for the key, the old
+     	 * value is replaced.
+     	 *
+      	 * @param key key with which the specified value is to be associated
+     	 * @param value value to be associated with the specified key
+     	 * @return the previous value associated with the specified key, or
+     	 *         <tt>null</tt> if there was no mapping for the key
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key or value is null
+     	 */
+    	public def put(key: Object, value: Object) : V {
+        	if (value == null)
+            		throw new NullPointerException();
+        	return doPut(key, value, false);
+    	}
+
+	/**
+	 * Removes the mapping for the specified key from this map if present.
+     	 *
+     	 * @param  key key for which mapping should be removed
+     	 * @return the previous value associated with the specified key, or
+     	 *         <tt>null</tt> if there was no mapping for the key
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def remove(key: Object) : V {
+        	return doRemove(key, null);
+    	}
+	
+
+	/**
+    	 * Returns <tt>true</tt> if this map maps one or more keys to the
+     	 * specified value.  This operation requires time linear in the
+     	 * map size.
+     	 *
+     	 * @param value value whose presence in this map is to be tested
+     	 * @return <tt>true</tt> if a mapping to <tt>value</tt> exists;
+     	 *         <tt>false</tt> otherwise
+     	 * @throws NullPointerException if the specified value is null
+     	 */
+    	public def containsValue(value: Object) : Boolean {
+        	if (value == null)
+        		throw new NullPointerException();
+        	for (var n: Node[K,V]! = findFirst(); n != null; n = n.next) {
+            		var v: Object = n.getValidValue();
+            		if (v != null && value.equals(v))
+                		return true;
+        	}
+        	return false;
+    	}
+
+	/**
+     	 * Returns the number of key-value mappings in this map.  If this map
+     	 * contains more than <tt>Integer.MAX_VALUE</tt> elements, it
+     	 * returns <tt>Integer.MAX_VALUE</tt>.
+     	 *
+     	 * <p>Beware that, unlike in most collections, this method is
+     	 * <em>NOT</em> a constant-time operation. Because of the
+     	 * asynchronous nature of these maps, determining the current
+     	 * number of elements requires traversing them all to count them.
+     	 * Additionally, it is possible for the size to change during
+     	 * execution of this method, in which case the returned result
+     	 * will be inaccurate. Thus, this method is typically not very
+     	 * useful in concurrent applications.
+     	 *
+     	 * @return the number of elements in this map
+     	 */
+    	public def size() : Int {
+        	var count: Long = 0;
+        	for (var n: Node[K,V]! = findFirst(); n != null; n = n.next) {
+            		if (n.getValidValue() != null)
+                		++count;
+        	}
+        	return (count >= Int.MAX_VALUE)? Int.MAX_VALUE : count as Int;
+    	}
+
+	/**
+     	 * Returns <tt>true</tt> if this map contains no key-value mappings.
+     	 * @return <tt>true</tt> if this map contains no key-value mappings
+     	 */
+    	public def isEmpty() : Boolean {
+        	return findFirst() == null;
+    	}
+
+    	/**
+     	 * Removes all of the mappings from this map.
+     	 */
+    	public def clear() : void {
+        	initialize();
+    	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/* ---------------- Relational operations -------------- */
+
+    	/**
+    	 * Returns a key-value mapping associated with the greatest key
+     	 * strictly less than the given key, or <tt>null</tt> if there is
+     	 * no such key. The returned entry does <em>not</em> support the
+     	 * <tt>Entry.setValue</tt> method.
+     	 *
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def lowerEntry(key: Object) : Map.Entry[K,V] {
+        	return getNear(key, LT);
+    	}
+
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def lowerKey(key: Object) : Object {
+        	var n: Node[K,V]! = findNear(key, LT);
+        	return (n == null)? null : n.key;
+    	}
+
+   	/**
+     	 * Returns a key-value mapping associated with the greatest key
+     	 * less than or equal to the given key, or <tt>null</tt> if there
+     	 * is no such key. The returned entry does <em>not</em> support
+     	 * the <tt>Entry.setValue</tt> method.
+     	 *
+     	 * @param key the key
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def floorEntry(key: Object) : Map.Entry[K,V] {
+        	return getNear(key, LT|EQ);
+    	}
+
+    	/**
+     	 * @param key the key
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def floorKey(key: Object) : Object {
+        	var n: Node[K,V]! = findNear(key, LT|EQ);
+        	return (n == null)? null : n.key;
+    	}
+
+	/**
+     	 * Returns a key-value mapping associated with the least key
+     	 * greater than or equal to the given key, or <tt>null</tt> if
+     	 * there is no such entry. The returned entry does <em>not</em>
+     	 * support the <tt>Entry.setValue</tt> method.
+     	 *
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def ceilingEntry(key: Object) :  Map.Entry[K,V] {
+        	return getNear(key, GT|EQ);
+    	}
+
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def ceilingKey(key: Object) : Object {
+	        var n: Node[K,V]! = findNear(key, GT|EQ);
+        	return (n == null)? null : n.key;
+    	}
+
+    	/**
+     	 * Returns a key-value mapping associated with the least key
+     	 * strictly greater than the given key, or <tt>null</tt> if there
+     	 * is no such key. The returned entry does <em>not</em> support
+     	 * the <tt>Entry.setValue</tt> method.
+     	 *
+     	 * @param key the key
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def higherEntry(key: Object) : Map.Entry[K,V] {
+        	return getNear(key, GT);
+    	}
+
+    	/**
+     	 * @param key the key
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if the specified key is null
+     	 */
+    	public def higherKey(key: Object) : Object {
+        	var n: Node[K,V]! = findNear(key, GT);
+        	return (n == null)? null : n.key;
+    	}
+
+	/**
+     	 * Returns a key-value mapping associated with the least
+     	 * key in this map, or <tt>null</tt> if the map is empty.
+     	 * The returned entry does <em>not</em> support
+     	 * the <tt>Entry.setValue</tt> method.
+     	 */
+    	public def firstEntry() : Map.Entry[K,V] {
+        	for (;;) {
+            		var n: Node[K,V]! = findFirst();
+            		if (n == null)
+                		return null;
+            		var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
+            		if (e != null)
+                		return e;
+        	}
+    	}
+
+    	/**
+     	 * Returns a key-value mapping associated with the greatest
+     	 * key in this map, or <tt>null</tt> if the map is empty.
+     	 * The returned entry does <em>not</em> support
+     	 * the <tt>Entry.setValue</tt> method.
+     	 */
+    	public def lastEntry() : Map.Entry[K,V] {
+        	for (;;) {
+            		var n: Node[K,V]! = findLast();
+            		if (n == null)
+                		return null;
+            		var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
+            		if (e != null)
+                		return e;
+        	}
+    	}
+
+    	/**
+     	 * Removes and returns a key-value mapping associated with
+     	 * the least key in this map, or <tt>null</tt> if the map is empty.
+     	 * The returned entry does <em>not</em> support
+     	 * the <tt>Entry.setValue</tt> method.
+     	 */
+    	public def pollFirstEntry() : Map.Entry[K,V] {
+        	return doRemoveFirstEntry();
+    	}
+
+    	/**
+     	 * Removes and returns a key-value mapping associated with
+     	 * the greatest key in this map, or <tt>null</tt> if the map is empty.
+     	 * The returned entry does <em>not</em> support
+     	 * the <tt>Entry.setValue</tt> method.
+     	 */
+    	public def pollLastEntry() : Map.Entry[K,V] {
+        	return doRemoveLastEntry();
+    	}
+
+
 
 
 	public static def main(args: Rail[String]!) {
