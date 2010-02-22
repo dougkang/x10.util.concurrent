@@ -182,13 +182,14 @@ public class ConcurrentSkipListMap[K,V] {
          	 * Creates and returns a new SimpleImmutableEntry holding current
          	 * mapping if this node holds a valid value, else null.
          	 * @return new entry or null
+	         * FIXXXXXXXXXXXXXXXXXXXXXXXXx
          	 */
-        	 public def createSnapshot(): SimpleImmutableEntry[K,V] {
+        	 /*public def createSnapshot(): SimpleImmutableEntry[K,V] {
             	 	var v: Object = getValidValue() as Object;
             		if (v == null)
                 		return null;
             		return new SimpleImmutableEntry[K,V](key, v);
-        	 }	
+        	 }*/	
 	}
 
 	/* --------------------- Indexing ----------------------*/
@@ -929,8 +930,9 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @param key the key
      	 * @param rel the relation -- OR'ed combination of EQ, LT, GT
      	 * @return Entry fitting relation, or null if no such
+	 * FIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
      	 */
-    	 public def getNear(key: Object, rel: Int) : SimpleImmutableEntry[K,V] {
+    	 /*public def getNear(key: Object, rel: Int) : SimpleImmutableEntry[K,V] {
         	for (;;) {
             		var n: Node[K,V]! = findNear(key, rel);
             		if (n == null)
@@ -939,7 +941,7 @@ public class ConcurrentSkipListMap[K,V] {
             		if (e != null)
                 		return e;
         	}
-    	}
+    	}*/
 
     	/* ---------------- Constructors -------------- */
 
