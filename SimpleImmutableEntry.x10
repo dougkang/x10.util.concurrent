@@ -1,10 +1,9 @@
-package x10.util;
-import x10.util.Map.Entry;
+import x10.util.*;
 
-public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
+public class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
 {
-        private val key: Box[K];
-        private val value: Box[V];
+        private global var key: Object;
+        private global var value: Object;
 
         /**
          * Creates an entry representing a mapping from the specified
@@ -13,7 +12,7 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          * @param key the key represented by this entry
          * @param value the value represented by this entry
          */
-        public def this(key: K, value: V) {
+        public def this(key: Object, value: Object) {
             this.key   = key;
             this.value = value;
         }
@@ -24,9 +23,9 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          *
          * @param entry the entry to copy
          */
-        public def this(entry: Entry[K, V]) {
-            this.key   = entry.getKey();
-            this.value = entry.getValue();
+        public def this(entry: Map.Entry[K, V]!) {
+        	this.key   = entry.getKey() as Object;
+        	this.value = entry.getValue() as Object;
         }
 
         /**
@@ -35,9 +34,9 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          * @return the key corresponding to this entry
          */
         public def getKey(): K {
-			if (key == null)
-				return null as K;
-            return key.value;
+		if (key == null)
+			return null as K;
+            	return key as K;
         }
 
         /**
@@ -46,9 +45,9 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          * @return the value corresponding to this entry
          */
         public def getValue(): V {
-			if (value == null)
-				return null as V;
-            return value.value;
+		if (value == null)
+			return null as V;
+            	return value as V;
         }
 
         /**
@@ -61,8 +60,8 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          * @return (Does not return)
          * @throws UnsupportedOperationException always
          */
-        public setValue(V value): V {
-            throw new UnsupportedOperationException();
+        public def setValue(value: V): void {
+        	throw new UnsupportedOperationException();
         }
 
         /**
@@ -86,12 +85,12 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          *         entry
          * @see    #hashCode
          */
-        public def equals(Object o): Boolean {
-            if (!(o instanceof Map.Entry))
-                return false;
-            var e: Map.Entry! = o as Map.Entry;
-            return (key == null ? e.getKey() == null : key.value.equals(e.getKey())) && 
-				   (value == null ? e.getValue() == null : value.equals(e.getValue()));
+        public def equals(o: Object): Boolean {
+        	if (!(o instanceof Map.Entry))
+                	return false;
+            	var e: Map.Entry! = o as Map.Entry;
+            	return (key == null ? e.getKey() == null : key.equals(e.getKey())) && 
+			(value == null ? e.getValue() == null : value.equals(e.getValue()));
         }
 
         /**
@@ -107,9 +106,9 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          * @return the hash code value for this map entry
          * @see    #equals
          */
-        public def hashCode() : Int {
-            return (key   == null ? 0 :   key.hashCode()) ^
-                   (value == null ? 0 : value.hashCode());
+        public global safe def hashCode() : Int {
+        	return (key   == null ? 0 :   key.hashCode()) ^
+                	(value == null ? 0 : value.hashCode());
         }
 
         /**
@@ -120,8 +119,8 @@ public static class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
          *
          * @return a String representation of this map entry
          */
-        public def toString() : String {
-            return key + "=" + value;
+        public global safe def toString() : String {
+        	return key + "=" + value;
         }
 
     }

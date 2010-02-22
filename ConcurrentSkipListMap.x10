@@ -11,6 +11,7 @@ arbitrary key value variables like the HashMap underneath
 */
  
 import x10.io.Console;
+import x10.util.Map.Entry;
 import x10.util.*;
 import x10.util.concurrent.atomic.AtomicInteger;
 import x10.lang.*;
@@ -41,7 +42,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * if using natural ordering.
      	 * @serial
      	 */
-    	private val comparator: Comparator[K];
+    	private var comparator: Comparator[K];
 
     	/**
      	 * Seed for simple random number generator.  Not volatile since it
@@ -177,11 +178,17 @@ public class ConcurrentSkipListMap[K,V] {
 			return v as V;
 		}
 
-		/**
-		 * Creates and returns a new SimpleImmutableEntry
-		 * NEEDS TO BE IMPLEMENTED, WE ARE NOT SURE
-		 * AbstractMap.SimpleImmutableEntry<K,V> createSnapShot()
-		 */
+        	/**
+         	 * Creates and returns a new SimpleImmutableEntry holding current
+         	 * mapping if this node holds a valid value, else null.
+         	 * @return new entry or null
+         	 */
+        	 public def createSnapshot(): SimpleImmutableEntry[K,V] {
+            	 	var v: Object = getValidValue() as Object;
+            		if (v == null)
+                		return null;
+            		return new SimpleImmutableEntry[K,V](key, v);
+        	 }	
 	}
 
 	/* --------------------- Indexing ----------------------*/
@@ -262,18 +269,18 @@ public class ConcurrentSkipListMap[K,V] {
 	 * SKIPPPPPPPPPPPPPPPPPPPPPPP
      	 */
 	
-	/*static final class ComparableUsingComparator[K] implements Comparable[K] {
+	static final class ComparableUsingComparator[K] implements Comparable[K] {
         	val actualKey: Object;
-        	val cmp: Comparator[K];
+        	var cmp: Comparator[K];
         
 		public def this (key: Object, cmp: Comparator[K]) {
 	        	this.actualKey = key;
 		        this.cmp = cmp;
         	}
-        	public def compareTo(k2: Object): Int {
-            		return cmp.compare(actualKey, k2);
+        	public def compareTo(k2: K): Int {
+            		return cmp.compare(actualKey as K, k2);
         	}
-    	}*/
+    	}
 
 	/**
      	 * If using comparator, return a ComparableUsingComparator, else
@@ -283,9 +290,9 @@ public class ConcurrentSkipListMap[K,V] {
     	private def comparable(key: Object) : Comparable[K] throws ClassCastException  {
         	if (key == null)
        			throw new NullPointerException();
-        	//if (comparator != null)
-            	//	return new ComparableUsingComparator<K>((K)key, comparator);
-        	//else
+        	if (comparator != null)
+            		return new ComparableUsingComparator[K](key, comparator);
+        	else
             		return key as Comparable[K];
     	}
 
@@ -294,7 +301,11 @@ public class ConcurrentSkipListMap[K,V] {
 	 * ComparableUsingComparator approach doesn't apply.
      	 */
     	public def compare(k1: Object, k2: Object): Int throws ClassCastException {
-    	        	return 0;
+    		var cmp: Comparator[K]! = comparator;
+        	if (cmp != null)
+            		return cmp.compare(k1 as K, k2 as K);
+        	else
+            		return (k1 as Comparable[K]).compareTo(k2 as K);
     	}
 
 	/**
@@ -348,7 +359,7 @@ public class ConcurrentSkipListMap[K,V] {
 				                r = q.right;         // reread r
                         			continue;
                     			}
-  		                        if (key.compareTo(k) > 0) {
+  		                        if (key.compareTo(k as K) > 0) {
                         			q = r;
 			                        r = r.right;
                         			continue;
@@ -387,7 +398,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (v == n || b.value == null)  // b is deleted
                     			break;
-                		var c: Int = key.compareTo(n.key);
+                		var c: Int = key.compareTo(n.key as K);
                 		if (c == 0)
                     			return n;
                 		else if (c < 0)
@@ -411,8 +422,8 @@ public class ConcurrentSkipListMap[K,V] {
 	        	var d: Index[K,V]!;
 	            	// Traverse rights
             		if (r != null && (n = r.node) != bound && n.key != null) {
-				k = n.key.value;
-                		if ((c = key.compareTo(k)) > 0) {
+				k = n.key;
+                		if ((c = key.compareTo(k as K)) > 0) {
                     			q = r;
                     			r = r.right;
                     			continue;
@@ -435,7 +446,7 @@ public class ConcurrentSkipListMap[K,V] {
        		for (n = q.node.next;  n != null; n = n.next) {
        			if (n.key != null) {
 				k = n.key;
-       				if ((c = key.compareTo(k)) == 0) {
+       				if ((c = key.compareTo(k as K)) == 0) {
                				var v: Object = n.value;
 				        return (v != null)? v as V: getUsingFindNode(key);
                			} else if (c < 0)
@@ -471,7 +482,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @param onlyIfAbsent if should not insert if already present
      	 * @return the old value, or null if newly inserted
      	 */
-    	private def doPut(kkey: K, value: V, onlyIfAbsent: boolean) : V {
+    	private def doPut(kkey: Object, value: Object, onlyIfAbsent: boolean) : V {
         	var key: Comparable[K]! = comparable(kkey as Object);
         	for (;;) {
             		var b: Node[K,V]! = findPredecessor(key);
@@ -488,7 +499,7 @@ public class ConcurrentSkipListMap[K,V] {
                     			}
                     			if (v == n || b.value == null) // b is deleted
                         			break;
-                    			var c: Int = key.compareTo(n.key);
+                    			var c: Int = key.compareTo(n.key as K);
                     			if (c > 0) {
                         			b = n;
                         			n = f;
@@ -606,7 +617,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		if (r != null) {
                     			var n:Node[K,V]! = r.node;
                     			// compare before deletion check avoids needing recheck
-                    			var c: Int = key.compareTo(n.key.value);
+                    			var c: Int = key.compareTo(n.key as K);
                     			if (n.value == null) {
                         			if (!q.unlink(r))
                         	    			break;
@@ -683,7 +694,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (v == n || b.value == null)      // b is deleted
                     			break;
-                		var c: Int = key.compareTo(n.key);
+                		var c: Int = key.compareTo(n.key as K);
                 		if (c < 0)
                     			return null as V;
                	 		if (c > 0) {
@@ -902,7 +913,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (v == n || b.value == null)    // b is deleted
                     			break;
-                		var c: Int = key.compareTo(n.key);
+                		var c: Int = key.compareTo(n.key as K);
                 		if ((c == 0 && (rel & EQ) != 0) || (c <  0 && (rel & LT) == 0))
                     			return n;
                 		if ( c <= 0 && (rel & LT) != 0)
@@ -918,17 +929,17 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @param key the key
      	 * @param rel the relation -- OR'ed combination of EQ, LT, GT
      	 * @return Entry fitting relation, or null if no such
-     	 
-    	 public def getNear(key: K, rel: Int) : AbstractMap.SimpleImmutableEntry[K,V] {
+     	 */
+    	 public def getNear(key: Object, rel: Int) : SimpleImmutableEntry[K,V] {
         	for (;;) {
-            		var n: Node[K,V] = findNear(key, rel);
+            		var n: Node[K,V]! = findNear(key, rel);
             		if (n == null)
                 		return null;
-            		var e: AbstractMap.SimpleImmutableEntry[K,V] = n.createSnapshot();
+            		var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
             		if (e != null)
                 		return e;
         	}
-    	} */
+    	}
 
     	/* ---------------- Constructors -------------- */
 
