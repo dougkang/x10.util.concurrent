@@ -78,14 +78,14 @@ public class ConcurrentSkipListMap[K,V] {
 	/* --------------------- Node ----------------------*/
 
 	static class Node[K, V] {
-		val key: Box[K];
+		val key: Object;
 		var value: Object;
 		var next: Node[K, V];
 		
 		/**
 		 * Constructor 
 		 */
-		public def this (key: K, value: Object, next: Node[K,V]) {
+		public def this (key: Object, value: Object, next: Node[K,V]) {
 			this.key = key;
 			this.value = value;
 			this.next = next;
@@ -263,14 +263,14 @@ public class ConcurrentSkipListMap[K,V] {
      	 */
 	
 	/*static final class ComparableUsingComparator[K] implements Comparable[K] {
-        	val actualKey: Box[K];
-        	val cmp: Comparator[? super K];
+        	val actualKey: Object;
+        	val cmp: Comparator[K];
         
-		public def this (key: K, cmp: Comparator[? super K]) {
+		public def this (key: Object, cmp: Comparator[K]) {
 	        	this.actualKey = key;
 		        this.cmp = cmp;
         	}
-        	public def compareTo(K k2): Int {
+        	public def compareTo(k2: Object): Int {
             		return cmp.compare(actualKey, k2);
         	}
     	}*/
@@ -293,7 +293,7 @@ public class ConcurrentSkipListMap[K,V] {
     	 * Compares using comparator or natural ordering. Used when the
 	 * ComparableUsingComparator approach doesn't apply.
      	 */
-    	public def compare(k1: Box[K], k2: Box[K]): Int throws ClassCastException {
+    	public def compare(k1: Object, k2: Object): Int throws ClassCastException {
     	        	return 0;
     	}
 
@@ -302,7 +302,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * strictly less than fence, bypassing either test if least or
      	 * fence are null. Needed mainly in submap operations.
      	 */
-    	public def inHalfOpenRange(key: Box[K], least: Box[K], fence: Box[K]): Boolean {
+    	public def inHalfOpenRange(key: Object, least: Object, fence: Object): Boolean {
 	        if (key == null)
         		throw new NullPointerException();
         	return ((least == null || compare(key, least) >= 0) &&
@@ -313,7 +313,7 @@ public class ConcurrentSkipListMap[K,V] {
          * Returns true if given key greater than or equal to least and less
          * or equal to fence. Needed mainly in submap operations.
          */
-    	public def inOpenRange(key: Box[K], least: Box[K], fence: Box[K]): Boolean {
+    	public def inOpenRange(key: Object, least: Object, fence: Object): Boolean {
         	if (key == null)
             		throw new NullPointerException();
 	        return ((least == null || compare(key, least) >= 0) &&
@@ -340,7 +340,7 @@ public class ConcurrentSkipListMap[K,V] {
 			for (;;) {
 		                if (r != null) {
                     			var n: Node[K,V]! = r.node;
-		  	                var k: K = n.key.value;
+		  	                var k: Object = n.key;
                     
 					if (n.value == null) {
                         			if (!q.unlink(r))
@@ -387,7 +387,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (v == n || b.value == null)  // b is deleted
                     			break;
-                		var c: Int = key.compareTo(n.key.value);
+                		var c: Int = key.compareTo(n.key);
                 		if (c == 0)
                     			return n;
                 		else if (c < 0)
@@ -404,7 +404,7 @@ public class ConcurrentSkipListMap[K,V] {
         	var q: Index[K,V]! = head;
         	var r: Index[K,V]! = q.right;
 	        var n: Node[K,V]!;
-        	var k: K;
+        	var k: Object;
         	var c: Int;
         
 		for (;;) {
@@ -434,7 +434,7 @@ public class ConcurrentSkipListMap[K,V] {
        		// Traverse nexts
        		for (n = q.node.next;  n != null; n = n.next) {
        			if (n.key != null) {
-				k = n.key.value;
+				k = n.key;
        				if ((c = key.compareTo(k)) == 0) {
                				var v: Object = n.value;
 				        return (v != null)? v as V: getUsingFindNode(key);
@@ -488,7 +488,7 @@ public class ConcurrentSkipListMap[K,V] {
                     			}
                     			if (v == n || b.value == null) // b is deleted
                         			break;
-                    			var c: Int = key.compareTo(n.key.value);
+                    			var c: Int = key.compareTo(n.key);
                     			if (c > 0) {
                         			b = n;
                         			n = f;
@@ -683,7 +683,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (v == n || b.value == null)      // b is deleted
                     			break;
-                		var c: Int = key.compareTo(n.key.value);
+                		var c: Int = key.compareTo(n.key);
                 		if (c < 0)
                     			return null as V;
                	 		if (c > 0) {
@@ -884,7 +884,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @param rel the relation -- OR'ed combination of EQ, LT, GT
      	 * @return nearest node fitting relation, or null if no such
      	 */
-    	public def findNear(kkey: K, rel: Int) : Node[K,V] {
+    	public def findNear(kkey: Object, rel: Int) : Node[K,V] {
         	var key: Comparable[K]! = comparable(kkey as Object);
         	for (;;) {
             		var b: Node[K,V]! = findPredecessor(key);
@@ -902,7 +902,7 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (v == n || b.value == null)    // b is deleted
                     			break;
-                		var c: Int = key.compareTo(n.key.value);
+                		var c: Int = key.compareTo(n.key);
                 		if ((c == 0 && (rel & EQ) != 0) || (c <  0 && (rel & LT) == 0))
                     			return n;
                 		if ( c <= 0 && (rel & LT) != 0)
