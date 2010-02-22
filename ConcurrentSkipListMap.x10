@@ -949,10 +949,131 @@ public class ConcurrentSkipListMap[K,V] {
      	 * Constructs a new, empty map, sorted according to the
      	 * {@linkplain Comparable natural ordering} of the keys.
      	 *
-    	public def ConcurrentSkipListMap() {
+    	public def this() {
         	this.comparator = null;
         	initialize();
     	} */
+
+    	/**
+     	 * Constructs a new, empty map, sorted according to the specified
+     	 * comparator.
+     	 *
+     	 * @param comparator the comparator that will be used to order this map.
+     	 *        If <tt>null</tt>, the {@linkplain Comparable natural
+    	 *        ordering} of the keys will be used.
+     	 *
+    	public def this(comparator: Comparator[K]) {
+        	this.comparator = comparator;
+        	initialize();
+    	}
+
+    	/**
+     	 * Constructs a new map containing the same mappings as the given map,
+     	 * sorted according to the {@linkplain Comparable natural ordering} of
+     	 * the keys.
+     	 *
+     	 * @param  m the map whose mappings are to be placed in this map
+     	 * @throws ClassCastException if the keys in <tt>m</tt> are not
+     	 *         {@link Comparable}, or are not mutually comparable
+     	 * @throws NullPointerException if the specified map or any of its keys
+     	 *         or values are null
+     	 *
+    	public def this(m: Map[K, V]) {
+        	this.comparator = null;
+        	initialize();
+        	putAll(m);
+    	} */
+
+    	/**
+     	 * Constructs a new map containing the same mappings and using the
+     	 * same ordering as the specified sorted map.
+     	 *
+     	 * @param m the sorted map whose mappings are to be placed in this
+     	 *        map, and whose comparator is to be used to sort this map
+     	 * @throws NullPointerException if the specified sorted map or any of
+     	 *         its keys or values are null
+     	 *
+    	public def this(m: SortedMap[K, ? extends V]) {
+        	this.comparator = m.comparator();
+        	initialize();
+        	buildFromSorted(m);
+    	} */
+
+    	/**
+     	 * Returns a shallow copy of this <tt>ConcurrentSkipListMap</tt>
+     	 * instance. (The keys and values themselves are not cloned.)
+     	 *
+     	 * @return a shallow copy of this map
+     	 *
+    	public def clone() : ConcurrentSkipListMap[K,V] {
+        	clone: ConcurrentSkipListMap[K,V] = null;
+        	try {
+            		clone = super.clone() as ConcurrentSkipListMap[K,V];
+        	} catch (e: CloneNotSupportedException) {
+            		throw new InternalError();
+        	}
+
+        	clone.initialize();
+        	clone.buildFromSorted(this);
+        	return clone;
+    	} */
+
+    	/**
+     	 * Streamlined bulk insertion to initialize from elements of
+     	 * given sorted map.  Call only from constructor or clone
+     	 * method.
+     	 *
+    	private def buildFromSorted(map: SortedMap[K, V]) : void {
+        	if (map == null)
+            		throw new NullPointerException();
+
+        	var h: HeadIndex[K,V] = head;
+        	var basepred: Node[K,V] = h.node;
+
+        	// Track the current rightmost node at each level. Uses an
+        	// ArrayList to avoid committing to initial or maximum level.
+        	var preds: ArrayList[Index[K,V]] = new ArrayList[Index[K,V]]();
+
+        	// initialize
+        	for (var i: Int = 0; i <= h.level; ++i)
+            		preds.add(null);
+        	var q: Index<K,V> = h;
+        	for (int i = h.level; i > 0; --i) {
+            		preds.set(i, q);
+            		q = q.down;
+        	}
+
+        	var it: Iterator[ Map.Entry[K, V]] = map.entrySet().iterator();
+        	while (it.hasNext()) {
+            		var e: Map.Entry[K, V] = it.next();
+            		var j: Int = randomLevel();
+            		if (j > h.level) 
+				j = h.level + 1;
+            		var k: K = e.getKey();
+            		var v: V = e.getValue();
+            		if (k == null || v == null)
+                		throw new NullPointerException();
+            		var z: Node[K,V] = new Node[K,V](k, v, null);
+            		basepred.next = z;
+            		basepred = z;
+            		if (j > 0) {
+                		var idx: Index[K,V] = null;
+                		for (var i: Int = 1; i <= j; ++i) {
+                    			idx = new Index[K,V](z, idx, null);
+                    			if (i > h.level)
+                        			h = new HeadIndex[K,V](h.node, h, idx, i);
+
+                    			if (i < preds.size()) {
+                        			preds.get(i).right = idx;
+                        			preds.set(i, idx);
+                    			} else
+                        			preds.add(idx);
+                		}
+            		}
+        	}
+        	head = h;
+    	} */
+
 
 	public static def main(args: Rail[String]!) {
 		var test: Node[Int, Int]! = null ;
