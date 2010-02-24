@@ -182,14 +182,13 @@ public class ConcurrentSkipListMap[K,V] {
          	 * Creates and returns a new SimpleImmutableEntry holding current
          	 * mapping if this node holds a valid value, else null.
          	 * @return new entry or null
-	         * FIXXXXXXXXXXXXXXXXXXXXXXXXx
          	 */
-        	 /*public def createSnapshot(): SimpleImmutableEntry[K,V] {
+        	 public def createSnapshot(): SimpleImmutableEntry[K,V] {
             	 	var v: Object = getValidValue() as Object;
             		if (v == null)
                 		return null;
             		return new SimpleImmutableEntry[K,V](key, v);
-        	 }*/	
+        	 }
 	}
 
 	/* --------------------- Indexing ----------------------*/
@@ -795,8 +794,7 @@ public class ConcurrentSkipListMap[K,V] {
             		if (!n.appendMarker(f) || !b.casNext(n, f))
                 		findFirst(); // retry
             		clearIndexToFirst();
-            		//return new SimpleImmutableEntry[K,V](n.key, v); VINCENT!! SKIPPP THIS FIX THIS!
-			return null;
+            		return new SimpleImmutableEntry[K,V](n.key, v);
 		}
     	}
 
@@ -904,7 +902,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * Removes last entry; returns its snapshot.
      	 * Specialized variant of doRemove.
      	 * @return null if empty, else snapshot of last entry
-     	 *
+     	 */
     	public def doRemoveLastEntry() : Map.Entry[K,V] {
         	for (;;) {
             		var b: Node[K,V]! = findPredecessorOfLast();
@@ -933,8 +931,8 @@ public class ConcurrentSkipListMap[K,V] {
                 		}
                 		if (!n.casValue(v, null))
                     			break;
-                		var key: K = n.key.value;
-                		var ck: Comparable[K] = comparable(key as Object);
+                		var key: Object = n.key;
+                		var ck: Comparable[K] = comparable(key);
                 		if (!n.appendMarker(f) || !b.casNext(n, f))
                     			findNode(ck);                  // Retry via findNode
                 		else {
@@ -942,10 +940,10 @@ public class ConcurrentSkipListMap[K,V] {
                     			if (head.right == null)
                         			tryReduceLevel();
                 		}
-                		return new AbstractMap.SimpleImmutableEntry[K,V](key, v as V);
+                		return new SimpleImmutableEntry[K,V](key,v);
             		}
         	}
-    	} */
+    	} 
 
     	/* ---------------- Relational operations -------------- */
 
@@ -995,17 +993,15 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @param key the key
      	 * @param rel the relation -- OR'ed combination of EQ, LT, GT
      	 * @return Entry fitting relation, or null if no such
-	 * FIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
      	 */
     	 public def getNear(key: Object, rel: Int) : SimpleImmutableEntry[K,V] {
         	for (;;) {
             		var n: Node[K,V]! = findNear(key, rel);
             		if (n == null)
                 		return null;
-            		//var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
-            		//if (e != null)
-                	//	return e;
-			return null;
+            		var e: SimpleImmutableEntry[K,V] = n.createSnapshot();
+            		if (e != null)
+                		return e;
         	}
     	}
 
