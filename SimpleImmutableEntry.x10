@@ -88,7 +88,7 @@ public class SimpleImmutableEntry[K,V] implements Map.Entry[K,V]
         public def equals(o: Object): Boolean {
         	if (!(o instanceof Map.Entry[K,V]))
                 	return false;
-            	var e: Map.Entry[K,V]! = o as Map.Entry[K,V];
+            	var e: Map.Entry[K,V]! = o as Map.Entry[K,V]!;
             	return (key == null ? e.getKey() == null : key.equals(e.getKey())) && 
 			(value == null ? e.getValue() == null : value.equals(e.getValue()));
         }

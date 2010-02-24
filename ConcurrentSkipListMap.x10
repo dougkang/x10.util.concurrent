@@ -1365,6 +1365,48 @@ public class ConcurrentSkipListMap[K,V] {
     	}
 
 
+	/* ---------------- View methods -------------- */
+
+    	/*	
+     	 * Note: Lazy initialization works for views because view classes
+     	 * are stateless/immutable so it doesn't matter wrt correctness if
+     	 * more than one is created (which will only rarely happen).  Even
+     	 * so, the following idiom conservatively ensures that the method
+     	 * returns the one it created if it does so, not one created by
+     	 * another racing thread.
+     	 */
+
+    	/**
+     	 * Returns a {@link NavigableSet} view of the keys contained in this map.
+     	 * The set's iterator returns the keys in ascending order.
+     	 * The set is backed by the map, so changes to the map are
+     	 * reflected in the set, and vice-versa.  The set supports element
+     	 * removal, which removes the corresponding mapping from the map,
+     	 * via the {@code Iterator.remove}, {@code Set.remove},
+     	 * {@code removeAll}, {@code retainAll}, and {@code clear}
+     	 * operations.  It does not support the {@code add} or {@code addAll}
+     	 * operations.
+     	 *
+     	 * <p>The view's {@code iterator} is a "weakly consistent" iterator
+     	 * that will never throw {@link ConcurrentModificationException},
+     	 * and guarantees to traverse elements as they existed upon
+     	 * construction of the iterator, and may (but is not guaranteed to)
+     	 * reflect any modifications subsequent to construction.
+     	 *
+     	 * <p>This method is equivalent to method {@code navigableKeySet}.
+     	 *
+     	 * @return a navigable set view of the keys in this map
+     	 * FIXXXXXXXXXXXXXXXXXXXXXXx
+	 */
+     	//public def keySet() : NavigableSet[K] {
+        //	KeySet ks = keySet;
+        //	return (ks != null) ? ks : (keySet = new KeySet(this));
+    	//}
+
+    	//public NavigableSet<K> navigableKeySet() {
+        //KeySet ks = keySet;
+        //return (ks != null) ? ks : (keySet = new KeySet(this));
+    	//}
 
 
 
@@ -1524,8 +1566,136 @@ public class ConcurrentSkipListMap[K,V] {
         	return doRemoveLastEntry();
     	}
 
+	
+	/* ---------------- Iterators -------------- */
+
+	
 
 
+	/* ---------------- View Classes -------------- */
+
+    	/*
+     	 * View classes are static, delegating to a ConcurrentNavigableMap
+     	 * to allow use by SubMaps, which outweighs the ugliness of
+     	 * needing type-tests for Iterator methods.
+     	 */
+
+    	/*static final def toList(c: Collection[E]) : List[E] {
+	// Using size() here would be a pessimization.
+		var list: List[E] = new ArrayList[E]();
+		for (e: E in c)
+	   		list.add(e);
+		return list;
+    	}*/
+
+
+	/*static final class KeySet[E] extends AbstractSet[E] implements NavigableSet[E] {
+        	private var m: ConcurrentNavigableMap[E,Object];
+        	
+		def this(map: ConcurrentNavigableMap[E,Object]) { m = map; }
+        	
+		public def size() : Int { return m.size(); }
+        	public def isEmpty() : Boolean { return m.isEmpty(); }
+        	public def contains(o: Object) : Boolean { return m.containsKey(o); }
+        	public def remove(o: Object) : Boolean { return m.remove(o) != null; }
+        	public def clear() : void { m.clear(); }
+        	public def lower(e: E) : E { return m.lowerKey(e); }
+        	public def floor(e: E) : E { return m.floorKey(e); }
+        	public def ceiling(e: E) : E { return m.ceilingKey(e); }
+        	public def higher(e: E) : E { return m.higherKey(e); }
+        	public def comparator() : Comparator[E] { return m.comparator(); }
+        	public def first() : E { return m.firstKey(); }
+        	public def last() : E { return m.lastKey(); }
+        	public def pollFirst() : E {
+           		var e: Map.Entry[E,Object] = m.pollFirstEntry();
+            		return e == null? null : e.getKey();
+        	}
+		public def pollLast() : E {
+            		var e: Map.Entry[E,Object] = m.pollLastEntry();
+            		return e == null? null : e.getKey();
+        	}
+       		public def iterator() : Iterator[E] {
+            		if (m instanceof ConcurrentSkipListMap[E, Object])
+                		return ((m as ConcurrentSkipListMap[E,Object])).keyIterator();
+            		else
+                		return ((m as ConcurrentSkipListMap.SubMap[E,Object])).keyIterator();
+        	}
+        	public def equals(o: Object) : Boolean {
+            		if (o == this)
+                		return true;
+            		if (!(o instanceof Set))	// FIXXXXXXXXXXXXXXXXX BELOW THIS LINE, FIX ALL FIX ALL!!! 
+                		return false;
+            		Collection<?> c = (Collection<?>) o;
+            		try {
+                		return containsAll(c) && c.containsAll(this);
+           		} catch (ClassCastException unused)   {
+                		return false;
+            		} catch (NullPointerException unused) {
+                		return false;
+            		}
+        	}
+		public Object[] toArray()     { return toList(this).toArray();  }
+		public <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
+        	public Iterator<E> descendingIterator() {
+            		return descendingSet().iterator();
+        	}
+        	public NavigableSet<E> subSet(E fromElement,
+                                      boolean fromInclusive,
+                                      E toElement,
+                                      boolean toInclusive) {
+            		return new ConcurrentSkipListSet<E>
+                		(m.subMap(fromElement, fromInclusive,
+                          		toElement,   toInclusive));
+        	}
+        	public NavigableSet<E> headSet(E toElement, boolean inclusive) {
+            		return new ConcurrentSkipListSet<E>(m.headMap(toElement, inclusive));
+        	}
+        	public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
+            		return new ConcurrentSkipListSet<E>(m.tailMap(fromElement, inclusive));
+        	}
+        	public NavigableSet<E> subSet(E fromElement, E toElement) {
+            		return subSet(fromElement, true, toElement, false);
+        	}
+        	public NavigableSet<E> headSet(E toElement) {
+            		return headSet(toElement, false);
+        	}
+        	public NavigableSet<E> tailSet(E fromElement) {
+            		return tailSet(fromElement, true);
+        	}
+        	public NavigableSet<E> descendingSet() {
+            		return new ConcurrentSkipListSet(m.descendingMap());
+        	}
+	}*/
+
+	/*static final class Values[E] extends AbstractCollection[E] {
+        	private var m: ConcurrentNavigableMap[Object, E];
+        
+		def this(map: ConcurrentNavigableMap[Object, E]) {
+            		m = map;
+        	}
+        	public def iterator() : Iterator[E] {
+            		if (m instanceof ConcurrentSkipListMap[Object, E])
+                		return ((m as ConcurrentSkipListMap[Object,E])).valueIterator();
+            		else
+                		return ((m as SubMap[Object,E])).valueIterator();
+        	}
+        	public def isEmpty() : Boolean {
+            		return m.isEmpty();
+       		}
+        	public def size() : Int {
+           		return m.size();
+        	}
+        	public def contains(o: Object) : Boolean {
+            		return m.containsValue(o);
+        	}
+        	public def clear() : void {
+            		m.clear();
+        	}
+		public def toArray() : Object[]    { return toList(this).toArray();  } // FIXXXXXXXXXXXXXXXXXXXX
+		public <T> T[] toArray(T[] a) { return toList(this).toArray(a); }	// FIXXXXXXXXXXXXXXXXXXX
+    	}*/
+
+	
 
 	public static def main(args: Rail[String]!) {
 		var test: Node[Int, Int]! = null ;
