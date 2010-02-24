@@ -1398,24 +1398,288 @@ public class ConcurrentSkipListMap[K,V] {
      	 * @return a navigable set view of the keys in this map
      	 * FIXXXXXXXXXXXXXXXXXXXXXXx
 	 */
-     	//public def keySet() : NavigableSet[K] {
-        //	KeySet ks = keySet;
-        //	return (ks != null) ? ks : (keySet = new KeySet(this));
-    	//}
+	/*     	
+	public def keySet() : NavigableSet[K] {
+        	KeySet ks = keySet;
+        	return (ks != null) ? ks : (keySet = new KeySet(this));
+    	} */
 
-    	//public NavigableSet<K> navigableKeySet() {
-        //KeySet ks = keySet;
-        //return (ks != null) ? ks : (keySet = new KeySet(this));
-    	//}
+	/*
+    	public NavigableSet<K> navigableKeySet() {
+        	KeySet ks = keySet;
+        	return (ks != null) ? ks : (keySet = new KeySet(this));
+    	} */
+
+    	/**
+     	 * Returns a {@link Collection} view of the values contained in this map.
+     	 * The collection's iterator returns the values in ascending order
+     	 * of the corresponding keys.
+     	 * The collection is backed by the map, so changes to the map are
+     	 * reflected in the collection, and vice-versa.  The collection
+     	 * supports element removal, which removes the corresponding
+     	 * mapping from the map, via the <tt>Iterator.remove</tt>,
+     	 * <tt>Collection.remove</tt>, <tt>removeAll</tt>,
+     	 * <tt>retainAll</tt> and <tt>clear</tt> operations.  It does not
+     	 * support the <tt>add</tt> or <tt>addAll</tt> operations.
+     	 *
+     	 * <p>The view's <tt>iterator</tt> is a "weakly consistent" iterator
+     	 * that will never throw {@link ConcurrentModificationException},
+     	 * and guarantees to traverse elements as they existed upon
+     	 * construction of the iterator, and may (but is not guaranteed to)
+     	 * reflect any modifications subsequent to construction.
+     	 *
+    	public def values() : Collection[V] {
+        	var vs: Values = values;
+        	return (vs != null) ? vs : (values = new Values(this));
+    	} */
+
+    	/**
+     	 * Returns a {@link Set} view of the mappings contained in this map.
+     	 * The set's iterator returns the entries in ascending key order.
+     	 * The set is backed by the map, so changes to the map are
+     	 * reflected in the set, and vice-versa.  The set supports element
+     	 * removal, which removes the corresponding mapping from the map,
+     	 * via the <tt>Iterator.remove</tt>, <tt>Set.remove</tt>,
+     	 * <tt>removeAll</tt>, <tt>retainAll</tt> and <tt>clear</tt>
+     	 * operations.  It does not support the <tt>add</tt> or
+     	 * <tt>addAll</tt> operations.
+     	 *
+     	 * <p>The view's <tt>iterator</tt> is a "weakly consistent" iterator
+     	 * that will never throw {@link ConcurrentModificationException},
+     	 * and guarantees to traverse elements as they existed upon
+     	 * construction of the iterator, and may (but is not guaranteed to)
+     	 * reflect any modifications subsequent to construction.
+     	 *
+     	 * <p>The <tt>Map.Entry</tt> elements returned by
+     	 * <tt>iterator.next()</tt> do <em>not</em> support the
+     	 * <tt>setValue</tt> operation.
+     	 *
+     	 * @return a set view of the mappings contained in this map,
+     	 *         sorted in ascending key order
+     	 *
+    	public def entrySet() :  Set[Map.Entry[K,V]] {
+        	var es : EntrySet = entrySet;
+        	return (es != null) ? es : (entrySet = new EntrySet(this));
+    	} */
+
+	/*
+    	public def descendingMap() : ConcurrentNavigableMap[K,V] {
+        	var dm: ConcurrentNavigableMap[K,V] = descendingMap;
+        	return (dm != null) ? dm : (descendingMap = new SubMap[K,V] (this, null, false, null, false, true));
+    	} */
+
+	/*
+    	public def descendingKeySet() : NavigableSet[K] {
+        	return descendingMap().navigableKeySet();
+    	} */
 
 
+    	/* ---------------- AbstractMap Overrides -------------- */
+
+    	/**
+     	 * Compares the specified object with this map for equality.
+     	 * Returns <tt>true</tt> if the given object is also a map and the
+     	 * two maps represent the same mappings.  More formally, two maps
+     	 * <tt>m1</tt> and <tt>m2</tt> represent the same mappings if
+     	 * <tt>m1.entrySet().equals(m2.entrySet())</tt>.  This
+     	 * operation may return misleading results if either map is
+     	 * concurrently modified during execution of this method.
+     	 *
+     	 * @param o object to be compared for equality with this map
+     	 * @return <tt>true</tt> if the specified object is equal to this map
+     	 *
+    	public def equals(o: Object) : Boolean {
+		if (o == this)
+	    		return true;
+		if (!(o instanceof Map))
+	    		return false;
+		var m:  Map[?,?] = o as Map[?,?];
+        	try {
+//	    		for (Map.Entry[K,V] e : this.entrySet())
+				if (! e.getValue().equals(m.get(e.getKey())))
+                    			return false;
+	    		for (Map.Entry[?,?] e : m.entrySet()) {
+                		var k: Object = e.getKey();
+                		var v: Object = e.getValue();
+				if (k == null || v == null || !v.equals(get(k)))
+                    			return false;
+            		}
+            		return true;
+        	} catch (unused: ClassCastException) {
+            		return false;
+        	} catch (unused: NullPointerException) {
+            		return false;
+        	}
+    	} */
+
+    	/* ------ ConcurrentMap API methods ------ */
+
+    	/**
+     	 * {@inheritDoc}
+     	 *
+     	 * @return the previous value associated with the specified key,
+     	 *         or <tt>null</tt> if there was no mapping for the key
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key or value is null
+     	 *
+    	public def putIfAbsent(key: K, value: V) : V {
+        	if (value == null)
+        		throw new NullPointerException();
+        	return doPut(key, value, true);
+    	} */
+
+    	/**
+     	 * {@inheritDoc}
+     	 *
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key is null
+     	 *
+    	public def remove(key: Object, value: Object) : Boolean {
+        	if (key == null)
+            		throw new NullPointerException();
+        	if (value == null)
+            		return false;
+        	return doRemove(key, value) != null;
+    	} */
+
+    	/**
+     	 * {@inheritDoc}
+     	 *
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if any of the arguments are null
+     	 *
+    	public def replace(key: K, oldValue: V, newValue: V) : Boolean {
+        	if (oldValue == null || newValue == null)
+            		throw new NullPointerException();
+        	var k: Comparable[K] = comparable(key);
+        	for (;;) {
+            		var n: Node[K,V] = findNode(k);
+            		if (n == null)
+                		return false;
+            		var v: Object = n.value;
+            		if (v != null) {
+                		if (!oldValue.equals(v))
+                    			return false;
+                		if (n.casValue(v, newValue))
+                    			return true;
+            		}
+        	}
+    	} */
+
+    	/**
+     	 * {@inheritDoc}
+     	 *
+     	 * @return the previous value associated with the specified key,
+     	 *         or <tt>null</tt> if there was no mapping for the key
+     	 * @throws ClassCastException if the specified key cannot be compared
+     	 *         with the keys currently in the map
+     	 * @throws NullPointerException if the specified key or value is null
+     	 *
+    	public def replace(key: K, value: V) : V {
+        	if (value == null)
+            		throw new NullPointerException();
+        	var k: Comparable[K] = comparable(key);
+        	for (;;) {
+            		var n: Node[K,V] = findNode(k);
+            		if (n == null)
+                		return null;
+            		var v: Object = n.value;
+            		if (v != null && n.casValue(v, value))
+                		return v as V;
+        	}
+    	} */
 
 
+    	/* ------ SortedMap API methods ------ */
 
+	/*
+    	public def comparator() : Comparator[K] {
+        	return comparator;
+    	} */
 
+    	/**
+     	 * @throws NoSuchElementException {@inheritDoc}
+     	 *
+    	public def firstKey() : K {
+        	var n: Node[K,V] = findFirst();
+        	if (n == null)
+            		throw new NoSuchElementException();
+        	return n.key;
+    	} */
 
+    	/**
+     	 * @throws NoSuchElementException {@inheritDoc}
+     	 *
+    	public def lastKey() : K {
+        	var n: Node[K,V] = findLast();
+        	if (n == null)
+            		throw new NoSuchElementException();
+        	return n.key;
+    	} */
 
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if {@code fromKey} or {@code toKey} is null
+     	 * @throws IllegalArgumentException {@inheritDoc}
+     	 *
+    	public def subMap(fromKey: K, fromInclusive: Boolean, toKey: K,
+                          toInclusive: Boolean) : ConcurrentNavigableMap[K,V] {
+        	if (fromKey == null || toKey == null)
+            		throw new NullPointerException();
+        	return new SubMap[K,V] (this, fromKey, fromInclusive, toKey, toInclusive, false);
+    	} */
 
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if {@code toKey} is null
+     	 * @throws IllegalArgumentException {@inheritDoc}
+     	 *
+    	public def headMap(toKey: K, inclusive: Boolean) : ConcurrentNavigableMap[K,V] {
+        	if (toKey == null)
+            		throw new NullPointerException();
+        	return new SubMap[K,V] (this, null, false, toKey, inclusive, false);
+    	} */
+
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if {@code fromKey} is null
+     	 * @throws IllegalArgumentException {@inheritDoc}
+     	 *
+    	public def tailMap(fromKey: K, inclusive: Boolean) : ConcurrentNavigableMap[K,V] {
+        	if (fromKey == null)
+            		throw new NullPointerException();
+        	return new SubMap[K,V] (this, fromKey, inclusive, null, false, false);
+    	} */
+
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if {@code fromKey} or {@code toKey} is null
+     	 * @throws IllegalArgumentException {@inheritDoc}
+     	 *
+    	public def subMap(fromKey: K, toKey: K) : ConcurrentNavigableMap[K,V] {
+        	return subMap(fromKey, true, toKey, false);
+    	} */
+
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if {@code toKey} is null
+     	 * @throws IllegalArgumentException {@inheritDoc}
+     	 *
+    	public def headMap(toKey: K) : ConcurrentNavigableMap[K,V] {
+        	return headMap(toKey, false);
+    	} */
+
+    	/**
+     	 * @throws ClassCastException {@inheritDoc}
+     	 * @throws NullPointerException if {@code fromKey} is null
+     	 * @throws IllegalArgumentException {@inheritDoc}
+     	 *
+    	public def tailMap(fromKey: K) : ConcurrentNavigableMap[K,V] {
+        	return tailMap(fromKey, true);
+    	} */
 
 
 	/* ---------------- Relational operations -------------- */
@@ -1569,8 +1833,102 @@ public class ConcurrentSkipListMap[K,V] {
 	
 	/* ---------------- Iterators -------------- */
 
-	
+    	/**
+     	 * Base of iterator classes:
+     	 *
+    	abstract class Iter[T] implements Iterator[T] {
+        	// the last node returned by next()
+        	var lastReturnedNode[K,V];
+        	// the next node to return from next();
+        	var next: Node[K,V];
+	 	// Cache of next value field to maintain weak consistency
+		var nextValue: V;
 
+        	// Initializes ascending iterator for entire range.
+        	this() {
+            		for (;;) {
+				next = findFirst();
+                		if (next == null)
+                    			break;
+                		var x: Object = next.value;
+                		if (x != null && x != next) {
+		    			nextValue = (V) x;
+                    			break;
+				}
+            		}
+        	}
+
+        	public def final hasNext() : Boolean {
+            		return next != null;
+        	}
+
+        	// Advances next to higher entry.
+        	def final advance() : void {
+            		if (next == null)
+                		throw new NoSuchElementException();
+	    		lastReturned = next;
+            		for (;;) {
+				next = next.next;
+                		if (next == null)
+                    			break;
+                		var x: Object = next.value;
+                		if (x != null && x != next) {
+		    			nextValue = x as V;
+                    			break;
+				}
+            		}
+        	}
+
+        	public def remove() : void {
+            		var l: Node[K,V] = lastReturned;
+            		if (l == null)
+                		throw new IllegalStateException();
+            		// It would not be worth all of the overhead to directly
+            		// unlink from here. Using remove is fast enough.
+            		ConcurrentSkipListMap.this.remove(l.key);
+	    		lastReturned = null;
+        	}
+    	}
+
+    	final class ValueIterator extends Iter[V] {
+        	public def next() : V {
+            		var v: V = nextValue;
+            		advance();
+            		return v;
+        	}
+    	}
+
+    	final class KeyIterator extends Iter[K] {
+        	public def next() : K {
+            		var n: Node[K,V] = next;
+            		advance();
+            		return n.key;
+        	}
+    	}
+
+    	final class EntryIterator extends Iter[Map.Entry[K,V]] {
+        	public def next() : Map.Entry[K,V] {
+            		var n: Node[K,V] = next;
+            		var v: V = nextValue;
+            		advance();
+            		return new AbstractMap.SimpleImmutableEntry[K,V](n.key, v);
+        	}
+    	}
+
+    	// Factory methods for iterators needed by ConcurrentSkipListSet etc
+
+    	def keyIterator() : Iterator[K] {
+        	return new KeyIterator();
+    	}
+
+    	def valueIterator() : Iterator[V] {
+        	return new ValueIterator();
+    	}
+
+    	def entryIterator() : Iterator[Map.Entry[K,V]] {
+    	    return new EntryIterator();
+    	} */
+	
 
 	/* ---------------- View Classes -------------- */
 
@@ -1580,16 +1938,17 @@ public class ConcurrentSkipListMap[K,V] {
      	 * needing type-tests for Iterator methods.
      	 */
 
-    	/*static final def toList(c: Collection[E]) : List[E] {
+    	/*
+	static final def toList(c: Collection[E]) : List[E] {
 	// Using size() here would be a pessimization.
 		var list: List[E] = new ArrayList[E]();
 		for (e: E in c)
 	   		list.add(e);
 		return list;
-    	}*/
+    	}* /
 
-
-	/*static final class KeySet[E] extends AbstractSet[E] implements NavigableSet[E] {
+	/*
+	static final class KeySet[E] extends AbstractSet[E] implements NavigableSet[E] {
         	private var m: ConcurrentNavigableMap[E,Object];
         	
 		def this(map: ConcurrentNavigableMap[E,Object]) { m = map; }
@@ -1625,49 +1984,47 @@ public class ConcurrentSkipListMap[K,V] {
                 		return true;
             		if (!(o instanceof Set))	// FIXXXXXXXXXXXXXXXXX BELOW THIS LINE, FIX ALL FIX ALL!!! 
                 		return false;
-            		Collection<?> c = (Collection<?>) o;
+            		var c: Collection[?] = o as Collection[?];
             		try {
                 		return containsAll(c) && c.containsAll(this);
-           		} catch (ClassCastException unused)   {
+           		} catch (unused: ClassCastException)   {
                 		return false;
-            		} catch (NullPointerException unused) {
+            		} catch (unused: NullPointerException) {
                 		return false;
             		}
         	}
-		public Object[] toArray()     { return toList(this).toArray();  }
-		public <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
-        	public Iterator<E> descendingIterator() {
+		public def toArray(): Object[] { return toList(this).toArray();  }
+		public def <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
+        	public def descendingIterator() : Iterator[E] {
             		return descendingSet().iterator();
         	}
-        	public NavigableSet<E> subSet(E fromElement,
-                                      boolean fromInclusive,
-                                      E toElement,
-                                      boolean toInclusive) {
-            		return new ConcurrentSkipListSet<E>
-                		(m.subMap(fromElement, fromInclusive,
-                          		toElement,   toInclusive));
+        	public def subSet(fromElement: E, fromInclusive, Boolean, toElement: E, 
+				toInclusive: Boolean) : NavigableSet[E] {
+            		return new ConcurrentSkipListSet[E]
+                		(m.subMap(fromElement, fromInclusive, toElement,   toInclusive));
         	}
-        	public NavigableSet<E> headSet(E toElement, boolean inclusive) {
+        	public def headSet(toElement: E, inclusive: Boolean) : NavigableSet[E] {
             		return new ConcurrentSkipListSet<E>(m.headMap(toElement, inclusive));
         	}
-        	public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
+        	public def tailSet(fromElement: E, inclusive: Boolean) : NavigableSet[E] {
             		return new ConcurrentSkipListSet<E>(m.tailMap(fromElement, inclusive));
         	}
-        	public NavigableSet<E> subSet(E fromElement, E toElement) {
+        	public def subSet(fromElement: E, toElement: E) : NavigableSet[E] {
             		return subSet(fromElement, true, toElement, false);
         	}
-        	public NavigableSet<E> headSet(E toElement) {
+        	public def headSet(toElement: E) : NavigableSet[E] {
             		return headSet(toElement, false);
         	}
-        	public NavigableSet<E> tailSet(E fromElement) {
+        	public def tailSet(fromElement: E) : NavigableSet[E] {
             		return tailSet(fromElement, true);
         	}
-        	public NavigableSet<E> descendingSet() {
+        	public def descendingSet() : NavigableSet[E] {
             		return new ConcurrentSkipListSet(m.descendingMap());
         	}
 	}*/
 
-	/*static final class Values[E] extends AbstractCollection[E] {
+	/*
+	static final class Values[E] extends AbstractCollection[E] {
         	private var m: ConcurrentNavigableMap[Object, E];
         
 		def this(map: ConcurrentNavigableMap[Object, E]) {
@@ -1693,9 +2050,93 @@ public class ConcurrentSkipListMap[K,V] {
         	}
 		public def toArray() : Object[]    { return toList(this).toArray();  } // FIXXXXXXXXXXXXXXXXXXXX
 		public <T> T[] toArray(T[] a) { return toList(this).toArray(a); }	// FIXXXXXXXXXXXXXXXXXXX
-    	}*/
+       		public def descendingIterator(): Iterator[E] {
+            		return descendingSet().iterator();
+        	}
+        	public def subSet(E fromElement, boolean fromInclusive, E toElement, 
+						boolean toInclusive): NavigableSet[E] {
+            		return new ConcurrentSkipListSet[E] (m.subMap(fromElement, fromInclusive,
+                          						toElement,   toInclusive));
+        	}
+        	public def headSet(toElement: E, inclusive: Boolean): NavigableSet[E] {
+            		return new ConcurrentSkipListSet[E](m.headMap(toElement, inclusive));
+        	}
+        	public def tailSet(fromElement: E, inclusive: Boolean): NavigableSet[E] {
+            		return new ConcurrentSkipListSet[E](m.tailMap(fromElement, inclusive));
+        	}
+        	public def subSet(fromElement: E, toElement: E): NavigableSet[E] {
+            		return subSet(fromElement, true, toElement, false);
+        	}
+        	public def headSet(E toElement): NavigableSet[E] {
+        	    	return headSet(toElement, false);
+        	}
+        	public def tailSet(E fromElement): NavigableSet[E] {
+        	    	return tailSet(fromElement, true);
+        	}
+        	public def descendingSet(): NavigableSet[E] {
+            		return new ConcurrentSkipListSet(m.descendingMap());
+        	}
+	} */
 
-	
+	/*
+    	static final class EntrySet[K1,V1] extends AbstractSet[Map.Entry[K1,V1]] {
+        	private final var m: ConcurrentNavigableMap[K1, V1];
+
+        	this(map: ConcurrentNavigableMap[K1, V1]) {
+            		m = map;
+        	}
+
+        	public def iterator() : Iterator[Map.Entry[K1,V1]] {
+            		if (m instanceof ConcurrentSkipListMap[K1, V1])
+                		return (m as ConcurrentSkipListMap[K1,V1]).entryIterator();
+            		else
+                		return (m as SubMap[K1,V1]).entryIterator();
+        	}
+
+        	public def contains(o: Object) : Boolean {
+            		if (!(o instanceof Map.Entry))
+                		return false;
+            		var e: Map.Entry[K1,V1] = o as Map.Entry[K1,V1];
+            		var v: V1 = m.get(e.getKey());
+            		return v != null && v.equals(e.getValue());
+        	}
+        	public def remove(o: Object) : Boolean {
+            		if (!(o instanceof Map.Entry))
+                		return false;
+            		var e: Map.Entry[K1,V1] = o as Map.Entry[K1,V1];
+            		return m.remove(e.getKey(), e.getValue());
+        	}
+        	public def isEmpty() : Boolean {
+            		return m.isEmpty();
+        	}
+        	public def size() : Int {
+            		return m.size();
+        	}
+        	public def clear() : void {
+            		m.clear();
+        	}
+        	public def equals(o: Object) : boolean {
+            		if (o == this)
+                		return true;
+            		if (!(o instanceof Set))
+                		return false;
+            		var c: Collection[?] = o as Collection[?];
+            		try {
+                		return containsAll(c) && c.containsAll(this);
+            		} catch (unused: ClassCastException)   {
+                		return false;
+            		} catch (unused: NullPointerException) {
+               	 		return false;
+            		}
+        	}
+		public def toArray(): Object[] { return toList(this).toArray();  }
+		public def <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
+    	} */
+
+
+
+
+
 
 	public static def main(args: Rail[String]!) {
 		var test: Node[Int, Int]! = null ;
