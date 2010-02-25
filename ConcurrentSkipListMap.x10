@@ -22,7 +22,7 @@ import x10.lang.*;
  * @author Jessica Wang
  */
  
-public class ConcurrentSkipListMap[K,V] {
+public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
 
     	/**
      	 * Generates the initial random seed for the cheaper per-instance
@@ -50,7 +50,16 @@ public class ConcurrentSkipListMap[K,V] {
      	 */
 	private transient var randomSeed: Int;
 
-    	/**
+	/** Lazily initialized key set */
+    	//private transient var keySet: Keyset;
+    	/** Lazily initialized entry set */
+    	//private transient var entrySet: EntrySet;
+    	/** Lazily initialized values collection */
+    	//private transient var values: Values;
+    	/** Lazily initialized descending key set */
+    	//private transient descendingMap: ConcurrentNavigableMap[K,V];
+    	
+	/**
      	 * Initializes or resets state. Needed by constructors, clone,
      	 * clear, readObject. and ConcurrentSkipListSet.clone.
      	 * (Note that comparator must be separately initialized.)
@@ -61,7 +70,7 @@ public class ConcurrentSkipListMap[K,V] {
         	//values = null;
         	//descendingMap = null;
         	randomSeed = seedGenerator.nextInt() | 0x0100; // ensure nonzero
-//        	head = new HeadIndex[K,V](new Node[K,V](null as K, BASE_HEADER, null as Node[K,V]), null, null, 1);
+        	head = new HeadIndex[K,V](new Node[K,V](null, BASE_HEADER, null as Node[K,V]), null, null, 1);
     	}
 
     	/**
@@ -1054,9 +1063,12 @@ public class ConcurrentSkipListMap[K,V] {
      	 *        map, and whose comparator is to be used to sort this map
      	 * @throws NullPointerException if the specified sorted map or any of
      	 *         its keys or values are null
-	 * NOT IMPLEMENTED SINCE SortedMap is not implemented in x10
-	 * Users will not need this constructor
      	 */
+    	public def this(m: SortedMap[K, V]!) {
+        	this.comparator = m.comparator();
+        	initialize();
+        	//buildFromSorted(m);
+    	}
 
     	/**
      	 * Returns a shallow copy of this <tt>ConcurrentSkipListMap</tt>
@@ -1085,7 +1097,7 @@ public class ConcurrentSkipListMap[K,V] {
      	 * given sorted map.  Call only from constructor or clone
      	 * method.
      	 */
-    	private def buildFromSorted(map: ConcurrentSkipListMap[K, V]) : void {
+    	private def buildFromSorted(map: SortedMap[K, V]) : void {
         	/*if (map == null)
             		throw new NullPointerException();
 
@@ -1595,10 +1607,13 @@ public class ConcurrentSkipListMap[K,V] {
 
     	/* ------ SortedMap API methods ------ */
 
-	/*
-    	public def comparator() : Comparator[K] {
-        	return comparator;
-    	} */
+    	/*public def comparator() : Comparator[K] {
+        	var cmp: Comparator[K] = m.comparator();
+	    	if (isDescending)
+			return Collections.reverseOrder(cmp);
+	    	else
+			return cmp;
+    	}*/
 
     	/**
      	 * @throws NoSuchElementException {@inheritDoc}
@@ -1835,35 +1850,36 @@ public class ConcurrentSkipListMap[K,V] {
 
     	/**
      	 * Base of iterator classes:
-     	 *
-    	abstract class Iter[T] implements Iterator[T] {
+     	 */
+    	/*class Iter[T] implements Iterator[T] {
         	// the last node returned by next()
-        	var lastReturnedNode[K,V];
+        	//var lastReturned: Node[K,V];
         	// the next node to return from next();
         	var next: Node[K,V];
 	 	// Cache of next value field to maintain weak consistency
-		var nextValue: V;
+		var nextValue: Object;
 
         	// Initializes ascending iterator for entire range.
-        	this() {
+        	/*def make() {                	FIXXXXXXXXXXXXXXXXXXXXXXXXX
             		for (;;) {
-				next = findFirst();
-                		if (next == null)
+				//next = findFirst();
+				//next = null; // FIXXXX                		
+				if (next == null)
                     			break;
                 		var x: Object = next.value;
                 		if (x != null && x != next) {
-		    			nextValue = (V) x;
+		    			nextValue = x;
                     			break;
 				}
             		}
-        	}
+        	}*/
 
-        	public def final hasNext() : Boolean {
+        	/*public def hasNext() : Boolean {
             		return next != null;
-        	}
+        	}*/
 
         	// Advances next to higher entry.
-        	def final advance() : void {
+        	/*def advance() : void {
             		if (next == null)
                 		throw new NoSuchElementException();
 	    		lastReturned = next;
@@ -1873,23 +1889,24 @@ public class ConcurrentSkipListMap[K,V] {
                     			break;
                 		var x: Object = next.value;
                 		if (x != null && x != next) {
-		    			nextValue = x as V;
+		    			nextValue = x;
                     			break;
 				}
             		}
         	}
 
         	public def remove() : void {
-            		var l: Node[K,V] = lastReturned;
+            		var l: Node[K,V]! = lastReturned;
             		if (l == null)
-                		throw new IllegalStateException();
+                		throw new NullPointerException();	// NOTE: illegalStateException does not exist in x10, substituting
             		// It would not be worth all of the overhead to directly
             		// unlink from here. Using remove is fast enough.
             		ConcurrentSkipListMap.this.remove(l.key);
 	    		lastReturned = null;
         	}
-    	}
 
+    	}*/
+/*
     	final class ValueIterator extends Iter[V] {
         	public def next() : V {
             		var v: V = nextValue;
@@ -1913,10 +1930,10 @@ public class ConcurrentSkipListMap[K,V] {
             		advance();
             		return new AbstractMap.SimpleImmutableEntry[K,V](n.key, v);
         	}
-    	}
+    	}*/
 
     	// Factory methods for iterators needed by ConcurrentSkipListSet etc
-
+	/*
     	def keyIterator() : Iterator[K] {
         	return new KeyIterator();
     	}
@@ -2132,9 +2149,6 @@ public class ConcurrentSkipListMap[K,V] {
 		public def toArray(): Object[] { return toList(this).toArray();  }
 		public def <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
     	} */
-
-
-
 
 
 
