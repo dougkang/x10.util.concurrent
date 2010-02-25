@@ -1,4 +1,4 @@
-package x10.util;
+//package x10.util;
 
 public interface NavigableMap[K,V] extends SortedMap[K,V] {
     def lowerEntry(key: K) : Map.Entry[K,V];
