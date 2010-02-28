@@ -11,7 +11,7 @@ public abstract class AbstractSet[T] extends AbstractCollection[T] implements Se
 		
 		if (! (o instanceof Set))
 			return false;
-		var c: Collection! = o as Collection;
+		var c: Collection[T]! = o as Collection[T];
 		if (c.size() != size())
 			return false;
 		try {
@@ -22,30 +22,19 @@ public abstract class AbstractSet[T] extends AbstractCollection[T] implements Se
 			return false;
 		}
 	}
-	public def hashCode() : Int {
+	/*public global safe def hashCode() : Int {
 		var h: Int = 0;
-		var i: Iterator[T] = iterator();
-		while(i.hashNext()) {
-			var obj: Object! = i.next() as Object;
+		var i: Iterator[T]! = iterator();
+		while(i.hasNext()) {
+			var obj: Object = i.next() as Object;
 			if(obj != null)
 				h += obj.hashCode();
 		}
 		return h;
-	}
-	public def removeAll(c: Collection[T]) : Boolean {
-		var modified : Boolean = false;
-		
-		if (size() > c.size()) {
-			for (var i: Iterator[T] = c.iterator(); i.hasNext(); )
-				modified |= remove(i.next());
-		} else {
-			for ( var i: Iterator[T] = iterator(); i.hasNext(); ) {
-				if (c.contains(i.next())) {
-					i.remove();
-					modified = true;
-				}
-			}
-		}
-		return modified;
+	}*/
+	/* this optional operation is unsupported because the iterator method does not implement the remove method */
+
+	public def removeAll(c: Collection[T]!) : Boolean {
+		throw new UnsupportedOperationException();
 	}
 }
