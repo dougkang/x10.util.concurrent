@@ -244,7 +244,7 @@ public abstract class AbstractMap[K,V] implements Map[K,V] {
         	if (!(o instanceof Map[K,V]))
             		return false;
         	var m: Map[K,V]! = o as Map[K,V];
-        	if (m.size() != size())
+        	if (m.entries().size() != size())
             		return false;
 
         	try {
@@ -270,34 +270,6 @@ public abstract class AbstractMap[K,V] implements Map[K,V] {
         	return true;
     	}
 
-	public def hashCode() : Int {
-        	var h: Int = 0;
-        	var i: Iterator[Entry[K,V]]! = entries().iterator();
-        	while (i.hasNext())
-            		h += i.next().hashCode();
-        	return h;
-    	}
-
-	public def toString() : String {
-        	var i: Iterator[Entry[K,V]]! = entries().iterator();
-        	if (! i.hasNext())
-            		return "{}";
-
-        	var sb: StringBuilder = new StringBuilder();
-        	sb.add('{');
-        	for (;;) {
-            		var e: Entry[K,V]! = i.next();
-            		var key: Box[K] = e.getKey();
-            		var value: Box[V] = e.getValue();
-            		sb.add(key == this ? "(this Map)" : key);
-            		sb.add('=');
-            		sb.add(value == this ? "(this Map)" : value);
-            		if (! i.hasNext())
-                		return sb.add('}').toString();
-            		sb.add(", ");
-        	}
-    	}
-
     	/**
      	 * Returns a shallow copy of this <tt>AbstractMap</tt> instance: the keys
      	 * and values themselves are not cloned.
@@ -305,7 +277,7 @@ public abstract class AbstractMap[K,V] implements Map[K,V] {
      	 * @return a shallow copy of this map
     	 */ 
     	protected def clone() : Object throws UnsupportedOperationException {
-        	var result: AbstractMap[K,V]! = super.clone() as AbstractMap[K,V];
+        	var result: AbstractMap[K,V]! = new Object() as AbstractMap[K,V];
         	result.keySet = null;
         	result.values = null;
         	return result;

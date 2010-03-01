@@ -51,13 +51,13 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
 	private transient var randomSeed: Int;
 
 	/** Lazily initialized key set */
-    	//private transient var keySet: Keyset;
+    	private transient var keySet: KeySet;
     	/** Lazily initialized entry set */
-    	//private transient var entrySet: EntrySet;
+    	private transient var entrySet: EntrySet;
     	/** Lazily initialized values collection */
-    	//private transient var values: Values;
+    	private transient var values: Values;
     	/** Lazily initialized descending key set */
-    	//private transient descendingMap: ConcurrentNavigableMap[K,V];
+    	private transient descendingMap: ConcurrentNavigableMap[K,V];
     	
 	/**
      	 * Initializes or resets state. Needed by constructors, clone,
@@ -65,10 +65,10 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
      	 * (Note that comparator must be separately initialized.)
      	 */
     	private proto def initialize() : void {
-        	//keySet = null;
-        	//entrySet = null;
-        	//values = null;
-        	//descendingMap = null;
+        	keySet = null;
+        	entrySet = null;
+        	values = null;
+        	descendingMap = null;
         	randomSeed = seedGenerator.nextInt() | 0x0100; // ensure nonzero
         	head = new HeadIndex[K,V](new Node[K,V](null, BASE_HEADER, null as Node[K,V]), null, null, 1);
     	}
@@ -1408,19 +1408,17 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
      	 * <p>This method is equivalent to method {@code navigableKeySet}.
      	 *
      	 * @return a navigable set view of the keys in this map
-     	 * FIXXXXXXXXXXXXXXXXXXXXXXx
-	 */
-	/*     	
-	public def keySet() : NavigableSet[K] {
-        	KeySet ks = keySet;
-        	return (ks != null) ? ks : (keySet = new KeySet(this));
-    	} */
+	 * FIXXXXXXXXXXXXXX
+	 */     	
+	/*public def keySet() : NavigableSet[K] {
+        	var ks: KeySet = keySet;
+        	return (ks != null) ? ks : (keySet = new KeySet(this as ConcurrentNavigableMap[x10.lang.Object,x10.lang.Object]));
+    	}
 
-	/*
-    	public NavigableSet<K> navigableKeySet() {
-        	KeySet ks = keySet;
+    	public def navigableKeySet() : NavigableSet[K] {
+        	var ks: KeySet = keySet;
         	return (ks != null) ? ks : (keySet = new KeySet(this));
-    	} */
+    	}*/
 
     	/**
      	 * Returns a {@link Collection} view of the values contained in this map.
@@ -1439,7 +1437,8 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
      	 * and guarantees to traverse elements as they existed upon
      	 * construction of the iterator, and may (but is not guaranteed to)
      	 * reflect any modifications subsequent to construction.
-     	 *
+	 * FIXXXXXXXXXXXXXXXXXXXXXXXXXx
+     	 
     	public def values() : Collection[V] {
         	var vs: Values = values;
         	return (vs != null) ? vs : (values = new Values(this));
@@ -1468,22 +1467,20 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
      	 *
      	 * @return a set view of the mappings contained in this map,
      	 *         sorted in ascending key order
-     	 *
-    	public def entrySet() :  Set[Map.Entry[K,V]] {
+     	 */
+    	/*public def entrySet() :  Set[Map.Entry[K,V]] {
         	var es : EntrySet = entrySet;
         	return (es != null) ? es : (entrySet = new EntrySet(this));
     	} */
 
-	/*
     	public def descendingMap() : ConcurrentNavigableMap[K,V] {
         	var dm: ConcurrentNavigableMap[K,V] = descendingMap;
         	return (dm != null) ? dm : (descendingMap = new SubMap[K,V] (this, null, false, null, false, true));
-    	} */
+    	} 
 
-	/*
     	public def descendingKeySet() : NavigableSet[K] {
         	return descendingMap().navigableKeySet();
-    	} */
+    	}
 
 
     	/* ---------------- AbstractMap Overrides -------------- */
@@ -1607,56 +1604,52 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
 
     	/* ------ SortedMap API methods ------ */
 
-    	/*public def comparator() : Comparator[K] {
-        	var cmp: Comparator[K] = m.comparator();
-	    	if (isDescending)
-			return Collections.reverseOrder(cmp);
-	    	else
-			return cmp;
-    	}*/
+    	public def comparator() : Comparator[K] {
+        	return comparator;
+    	}
 
     	/**
      	 * @throws NoSuchElementException {@inheritDoc}
-     	 *
-    	public def firstKey() : K {
-        	var n: Node[K,V] = findFirst();
+     	 */
+    	public def firstKey() : Object {
+        	var n: Node[K,V]! = findFirst();
         	if (n == null)
             		throw new NoSuchElementException();
         	return n.key;
-    	} */
+    	} 
 
     	/**
      	 * @throws NoSuchElementException {@inheritDoc}
-     	 *
-    	public def lastKey() : K {
-        	var n: Node[K,V] = findLast();
+     	 */
+    	public def lastKey() : Object {
+        	var n: Node[K,V]! = findLast();
         	if (n == null)
             		throw new NoSuchElementException();
         	return n.key;
-    	} */
+    	} 
 
     	/**
      	 * @throws ClassCastException {@inheritDoc}
      	 * @throws NullPointerException if {@code fromKey} or {@code toKey} is null
      	 * @throws IllegalArgumentException {@inheritDoc}
-     	 *
-    	public def subMap(fromKey: K, fromInclusive: Boolean, toKey: K,
+     	 */
+    	public def subMap(fromKey: Object, fromInclusive: Boolean, toKey: Object,
                           toInclusive: Boolean) : ConcurrentNavigableMap[K,V] {
         	if (fromKey == null || toKey == null)
             		throw new NullPointerException();
         	return new SubMap[K,V] (this, fromKey, fromInclusive, toKey, toInclusive, false);
-    	} */
+    	} 
 
     	/**
      	 * @throws ClassCastException {@inheritDoc}
      	 * @throws NullPointerException if {@code toKey} is null
      	 * @throws IllegalArgumentException {@inheritDoc}
-     	 *
-    	public def headMap(toKey: K, inclusive: Boolean) : ConcurrentNavigableMap[K,V] {
+     	 */
+    	public def headMap(toKey: Object, inclusive: Boolean) : ConcurrentNavigableMap[K,V] {
         	if (toKey == null)
             		throw new NullPointerException();
         	return new SubMap[K,V] (this, null, false, toKey, inclusive, false);
-    	} */
+    	} 
 
     	/**
      	 * @throws ClassCastException {@inheritDoc}
@@ -1955,53 +1948,58 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
      	 * needing type-tests for Iterator methods.
      	 */
 
-    	/*
-	static final def toList(c: Collection[E]) : List[E] {
+    	
+	static final def toList(c: Collection[Object]) : List[Object] {
 	// Using size() here would be a pessimization.
-		var list: List[E] = new ArrayList[E]();
-		for (e: E in c)
+		var list: List[Object]! = new ArrayList[Object]();
+		for (e: Object in c)
 	   		list.add(e);
 		return list;
-    	}* /
+    	}
 
-	/*
-	static final class KeySet[E] extends AbstractSet[E] implements NavigableSet[E] {
-        	private var m: ConcurrentNavigableMap[E,Object];
+	static final class KeySet[Object] extends AbstractSet[Object] implements NavigableSet[Object] {
+        	private var m: ConcurrentNavigableMap[Object,Object];
         	
-		def this(map: ConcurrentNavigableMap[E,Object]) { m = map; }
+		def this(map: ConcurrentNavigableMap[Object,Object]) { this.m = map; }
         	
-		public def size() : Int { return m.size(); }
-        	public def isEmpty() : Boolean { return m.isEmpty(); }
+		public def size() : Int { return m.entries().size(); }
+        	public def isEmpty() : Boolean { return size()==0; }
         	public def contains(o: Object) : Boolean { return m.containsKey(o); }
         	public def remove(o: Object) : Boolean { return m.remove(o) != null; }
         	public def clear() : void { m.clear(); }
-        	public def lower(e: E) : E { return m.lowerKey(e); }
-        	public def floor(e: E) : E { return m.floorKey(e); }
-        	public def ceiling(e: E) : E { return m.ceilingKey(e); }
-        	public def higher(e: E) : E { return m.higherKey(e); }
-        	public def comparator() : Comparator[E] { return m.comparator(); }
-        	public def first() : E { return m.firstKey(); }
-        	public def last() : E { return m.lastKey(); }
-        	public def pollFirst() : E {
-           		var e: Map.Entry[E,Object] = m.pollFirstEntry();
-            		return e == null? null : e.getKey();
+        	public def lower(e: Object) : Object { return m.lowerKey(e); }
+        	public def floor(e: Object) : Object { return m.floorKey(e); }
+        	public def ceiling(e: Object) : Object { return m.ceilingKey(e); }
+        	public def higher(e: Object) : Object { return m.higherKey(e); }
+        	public def comparator() : Comparator[Object] { return m.comparator(); }
+        	public def first() : Object { return m.firstKey(); }
+        	public def last() : Object { return m.lastKey(); }
+        	public def pollFirst() : Object {
+           		var e: Map.Entry[Object,Object]! = m.pollFirstEntry();
+            		if (e == null)
+				return null as Object;
+			else 
+				return e.getKey();
         	}
-		public def pollLast() : E {
-            		var e: Map.Entry[E,Object] = m.pollLastEntry();
-            		return e == null? null : e.getKey();
+		public def pollLast() : Object {
+            		var e: Map.Entry[Object,Object]! = m.pollLastEntry();
+            		if (e == null)
+				return null as Object;
+			else 
+				return e.getKey();
         	}
-       		public def iterator() : Iterator[E] {
-            		if (m instanceof ConcurrentSkipListMap[E, Object])
-                		return ((m as ConcurrentSkipListMap[E,Object])).keyIterator();
+       		public def iterator() : Iterator[Object] {
+            		if (m instanceof ConcurrentSkipListMap[Object, Object])
+                		return ((m as ConcurrentSkipListMap[Object,Object])).keyIterator();
             		else
-                		return ((m as ConcurrentSkipListMap.SubMap[E,Object])).keyIterator();
+                		return ((m as ConcurrentSkipListMap.SubMap[Object,Object])).keyIterator();
         	}
         	public def equals(o: Object) : Boolean {
             		if (o == this)
                 		return true;
-            		if (!(o instanceof Set))	// FIXXXXXXXXXXXXXXXXX BELOW THIS LINE, FIX ALL FIX ALL!!! 
+            		if (!(o instanceof Set[Object]))
                 		return false;
-            		var c: Collection[?] = o as Collection[?];
+            		var c: Collection[Object] = o as Collection[Object];
             		try {
                 		return containsAll(c) && c.containsAll(this);
            		} catch (unused: ClassCastException)   {
@@ -2010,48 +2008,47 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
                 		return false;
             		}
         	}
-		public def toArray(): Object[] { return toList(this).toArray();  }
-		public def <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
-        	public def descendingIterator() : Iterator[E] {
+		public def toRail(): Rail[Object] { return toList(this).toRail();  }
+		//public def toArray(T[] a) : Rail[Object] { return toList(this).toArray(a); }
+        	public def descendingIterator() : Iterator[Object] {
             		return descendingSet().iterator();
         	}
-        	public def subSet(fromElement: E, fromInclusive, Boolean, toElement: E, 
-				toInclusive: Boolean) : NavigableSet[E] {
-            		return new ConcurrentSkipListSet[E]
-                		(m.subMap(fromElement, fromInclusive, toElement,   toInclusive));
+        	public def subSet(fromElement: Object, fromInclusive: Boolean, toElement: Object, 
+				toInclusive: Boolean) : NavigableSet[Object] {
+            		return new ConcurrentSkipListSet[Object]
+                		(m.subMap(fromElement, fromInclusive, toElement, toInclusive));
         	}
-        	public def headSet(toElement: E, inclusive: Boolean) : NavigableSet[E] {
-            		return new ConcurrentSkipListSet<E>(m.headMap(toElement, inclusive));
+        	public def headSet(toElement: Object, inclusive: Boolean) : NavigableSet[Object] {
+            		return new ConcurrentSkipListSet[Object](m.headMap(toElement, inclusive));
         	}
-        	public def tailSet(fromElement: E, inclusive: Boolean) : NavigableSet[E] {
-            		return new ConcurrentSkipListSet<E>(m.tailMap(fromElement, inclusive));
+        	public def tailSet(fromElement: Object, inclusive: Boolean) : NavigableSet[Object] {
+            		return new ConcurrentSkipListSet[Object](m.tailMap(fromElement, inclusive));
         	}
-        	public def subSet(fromElement: E, toElement: E) : NavigableSet[E] {
+        	public def subSet(fromElement: Object, toElement: Object) : NavigableSet[Object] {
             		return subSet(fromElement, true, toElement, false);
         	}
-        	public def headSet(toElement: E) : NavigableSet[E] {
+        	public def headSet(toElement: Object) : NavigableSet[Object] {
             		return headSet(toElement, false);
         	}
-        	public def tailSet(fromElement: E) : NavigableSet[E] {
+        	public def tailSet(fromElement: Object) : NavigableSet[Object] {
             		return tailSet(fromElement, true);
         	}
-        	public def descendingSet() : NavigableSet[E] {
+        	public def descendingSet() : NavigableSet[Object] {
             		return new ConcurrentSkipListSet(m.descendingMap());
         	}
-	}*/
-
-	/*
-	static final class Values[E] extends AbstractCollection[E] {
-        	private var m: ConcurrentNavigableMap[Object, E];
+	}
+	
+	static final class Values[Object] extends AbstractCollection[Object] {
+        	private var m: ConcurrentNavigableMap[Object, Object];
         
-		def this(map: ConcurrentNavigableMap[Object, E]) {
+		def this(map: ConcurrentNavigableMap[Object, Object]) {
             		m = map;
         	}
-        	public def iterator() : Iterator[E] {
-            		if (m instanceof ConcurrentSkipListMap[Object, E])
-                		return ((m as ConcurrentSkipListMap[Object,E])).valueIterator();
+        	public def iterator() : Iterator[Object] {
+            		if (m instanceof ConcurrentSkipListMap[Object, Object])
+                		return ((m as ConcurrentSkipListMap[Object,Object])).valueIterator();
             		else
-                		return ((m as SubMap[Object,E])).valueIterator();
+                		return ((m as SubMap[Object,Object])).valueIterator();
         	}
         	public def isEmpty() : Boolean {
             		return m.isEmpty();
@@ -2065,41 +2062,40 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
         	public def clear() : void {
             		m.clear();
         	}
-		public def toArray() : Object[]    { return toList(this).toArray();  } // FIXXXXXXXXXXXXXXXXXXXX
-		public <T> T[] toArray(T[] a) { return toList(this).toArray(a); }	// FIXXXXXXXXXXXXXXXXXXX
-       		public def descendingIterator(): Iterator[E] {
+		public def toRail() : Rail[Object] { return toList(this).toRail();  } 
+		//public <T> T[] toArray(T[] a) { return toList(this).toArray(a); }	// FIXXXXXXXXXXXXXXXXXXX
+       		public def descendingIterator() : Iterator[Object] {
             		return descendingSet().iterator();
         	}
-        	public def subSet(E fromElement, boolean fromInclusive, E toElement, 
-						boolean toInclusive): NavigableSet[E] {
-            		return new ConcurrentSkipListSet[E] (m.subMap(fromElement, fromInclusive,
+        	public def subSet(fromElement: Object, fromInclusive: Boolean, toElement: Object, 
+						toInclusive: Boolean) : NavigableSet[Object] {
+            		return new ConcurrentSkipListSet[Object] (m.subMap(fromElement, fromInclusive,
                           						toElement,   toInclusive));
         	}
-        	public def headSet(toElement: E, inclusive: Boolean): NavigableSet[E] {
-            		return new ConcurrentSkipListSet[E](m.headMap(toElement, inclusive));
+        	public def headSet(toElement: Object, inclusive: Boolean) : NavigableSet[Object] {
+            		return new ConcurrentSkipListSet[Object](m.headMap(toElement, inclusive));
         	}
-        	public def tailSet(fromElement: E, inclusive: Boolean): NavigableSet[E] {
-            		return new ConcurrentSkipListSet[E](m.tailMap(fromElement, inclusive));
+        	public def tailSet(fromElement: Object, inclusive: Boolean) : NavigableSet[Object] {
+            		return new ConcurrentSkipListSet[Object](m.tailMap(fromElement, inclusive));
         	}
-        	public def subSet(fromElement: E, toElement: E): NavigableSet[E] {
+        	public def subSet(fromElement: Object, toElement: Object) : NavigableSet[Object] {
             		return subSet(fromElement, true, toElement, false);
         	}
-        	public def headSet(E toElement): NavigableSet[E] {
+        	public def headSet(toElement: Object) : NavigableSet[Object] {
         	    	return headSet(toElement, false);
         	}
-        	public def tailSet(E fromElement): NavigableSet[E] {
+        	public def tailSet(fromElement: Object) : NavigableSet[Object] {
         	    	return tailSet(fromElement, true);
         	}
-        	public def descendingSet(): NavigableSet[E] {
+        	public def descendingSet() : NavigableSet[Object] {
             		return new ConcurrentSkipListSet(m.descendingMap());
         	}
-	} */
+	} 
 
-	/*
     	static final class EntrySet[K1,V1] extends AbstractSet[Map.Entry[K1,V1]] {
-        	private final var m: ConcurrentNavigableMap[K1, V1];
+        	private var m: ConcurrentNavigableMap[K1, V1];
 
-        	this(map: ConcurrentNavigableMap[K1, V1]) {
+        	def this(map: ConcurrentNavigableMap[K1, V1]) {
             		m = map;
         	}
 
@@ -2111,16 +2107,16 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
         	}
 
         	public def contains(o: Object) : Boolean {
-            		if (!(o instanceof Map.Entry))
+            		if (!(o instanceof Map.Entry[K1,V1]))
                 		return false;
-            		var e: Map.Entry[K1,V1] = o as Map.Entry[K1,V1];
-            		var v: V1 = m.get(e.getKey());
+            		var e: Map.Entry[K1,V1]! = o as Map.Entry[K1,V1];
+            		var v: Object! = m.get(e.getKey());
             		return v != null && v.equals(e.getValue());
         	}
         	public def remove(o: Object) : Boolean {
-            		if (!(o instanceof Map.Entry))
+            		if (!(o instanceof Map.Entry[K1,V1]))
                 		return false;
-            		var e: Map.Entry[K1,V1] = o as Map.Entry[K1,V1];
+            		var e: Map.Entry[K1,V1]! = o as Map.Entry[K1,V1];
             		return m.remove(e.getKey(), e.getValue());
         	}
         	public def isEmpty() : Boolean {
@@ -2135,9 +2131,9 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
         	public def equals(o: Object) : boolean {
             		if (o == this)
                 		return true;
-            		if (!(o instanceof Set))
+            		if (!(o instanceof Set[Object]))
                 		return false;
-            		var c: Collection[?] = o as Collection[?];
+            		var c: Collection[Object]! = o as Collection[Object];
             		try {
                 		return containsAll(c) && c.containsAll(this);
             		} catch (unused: ClassCastException)   {
@@ -2146,11 +2142,617 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
                	 		return false;
             		}
         	}
-		public def toArray(): Object[] { return toList(this).toArray();  }
-		public def <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
-    	} */
+		public def toRail(): Rail[Object] { return toList(this).toRail();  }
+		//public def <T> T[] toArray(T[] a) { return toList(this).toArray(a); }
+    	}
 
+	static final class SubMap[K,V] extends AbstractMap[K,V] implements ConcurrentNavigableMap[K,V]
+    	{
 
+        	// Underlying map
+        	private var m: ConcurrentSkipListMap[K,V];
+        	// lower bound key, or null if from start
+        	private var lo: Object;
+        	// upper bound key, or null if to end
+        	private var hi: Object;
+        	// inclusion flag for lo
+        	private var loInclusive: Boolean;
+        	// inclusion flag for hi
+        	private var hiInclusive: Boolean;
+        	// direction
+        	private var isDescending: Boolean;
+
+        	// Lazily initialized view holders
+        	private transient var keySetView: KeySet[K];
+        	private transient var entrySetView: Set[Map.Entry[K,V]];
+        	private transient var valuesView: Collection[V];
+
+		/**
+         	 * Creates a new submap, initializing all fields
+         	 */
+        	def this(map: ConcurrentSkipListMap[K,V], fromKey: Object, fromInclusive: Boolean, toKey: Object, 
+							toInclusive: Boolean, isDescending: Boolean) {
+            		if (fromKey != null && toKey != null && map.compare(fromKey, toKey) > 0)
+                		throw new IllegalArgumentException("inconsistent range");
+            		this.m = map;
+            		this.lo = fromKey;
+            		this.hi = toKey;
+            		this.loInclusive = fromInclusive;
+            		this.hiInclusive = toInclusive;
+            		this.isDescending = isDescending;
+        	}
+
+		/* ----------------  Utilities -------------- */
+        	private def tooLow(key: Object) : Boolean {
+            		if (lo != null) {
+                		var c: Int = m.compare(key, lo);
+                		if (c < 0 || (c == 0 && !loInclusive))
+                    		return true;
+            		}
+            		return false;
+        	}
+
+        	private def tooHigh(key: Object) : Boolean {
+            		if (hi != null) {
+                		var c: Int = m.compare(key, hi);
+                		if (c > 0 || (c == 0 && !hiInclusive))
+                    			return true;
+            		}
+            		return false;
+        	}
+		
+		private def inBounds(key: Object) : Boolean {
+            		return !tooLow(key) && !tooHigh(key);
+        	}
+
+        	private def checkKeyBounds(key: Object) : void throws IllegalArgumentException {
+            		if (key == null)
+                		throw new NullPointerException();
+            		if (!inBounds(key))
+                		throw new IllegalArgumentException("key out of range");
+        	}
+
+		/**
+         	 * Returns true if node key is less than upper bound of range
+         	 */
+        	private def isBeforeEnd(n: ConcurrentSkipListMap.Node[K,V]) : Boolean {
+            		if (n == null)
+                		return false;
+            		if (hi == null)
+                		return true;
+            		var k: Object = n.key;
+				if (k == null) // pass by markers and headers
+					return true;
+				var c: Int = m.compare(k, hi);
+				if (c > 0 || (c == 0 && !hiInclusive))
+					return false;
+				return true;
+		}
+
+		/**
+         	 * Returns lowest node. This node might not be in range, so
+         	 * most usages need to check bounds
+         	 */
+        	private def loNode() : ConcurrentSkipListMap.Node[K,V] {
+            		if (lo == null)
+                		return m.findFirst();
+            		else if (loInclusive)
+                		return m.findNear(lo, m.GT|m.EQ);
+            		else
+                		return m.findNear(lo, m.GT);
+        	} 
+
+        	/**
+         	 * Returns highest node. This node might not be in range, so
+         	 * most usages need to check bounds
+         	 */
+        	private def hiNode() : ConcurrentSkipListMap.Node[K,V] {
+            		if (hi == null)
+                		return m.findLast();
+            		else if (hiInclusive)
+                		return m.findNear(hi, m.LT|m.EQ);
+            		else
+                		return m.findNear(hi, m.LT);
+        	}
+
+		/**
+         	 * Returns lowest absolute key (ignoring directonality)
+         	 */
+        	private def lowestKey() : Object {
+            		var n:ConcurrentSkipListMap.Node[K,V]! = loNode();
+            		if (isBeforeEnd(n))
+                		return n.key;
+            		else
+                		throw new NoSuchElementException();
+        	} 
+
+        	/**
+         	 * Returns highest absolute key (ignoring directonality)
+         	 */
+        	private def highestKey() : Object {
+            		var n: ConcurrentSkipListMap.Node[K,V]! = hiNode();
+            		if (n != null) {
+                		last: Object = n.key;
+                		if (inBounds(last))
+                    			return last;
+            		}
+            		throw new NoSuchElementException();
+        	}
+
+		private def lowestEntry() : Map.Entry[K,V] {
+			for (;;) {
+		        	var n: ConcurrentSkipListMap.Node[K,V]! = loNode();
+		        	if (!isBeforeEnd(n))
+		            		return null;
+		        	var e: Map.Entry[K,V] = n.createSnapshot();
+		        	if (e != null)
+		            		return e;
+		    	}
+		}
+
+		private def highestEntry() : Map.Entry[K,V] {
+		    	for (;;) {
+		        	var n: ConcurrentSkipListMap.Node[K,V]! = hiNode();
+		        	if (n == null || !inBounds(n.key))
+		            		return null;
+		        	var e: Map.Entry[K,V] = n.createSnapshot();
+		        	if (e != null)
+		            		return e;
+		    	}
+		}
+
+		private def removeLowest() : Map.Entry[K,V] {
+		    	for (;;) {
+		        	var n: Node[K,V] = loNode();
+		        	if (n == null)
+		            		return null;
+		        	var k: Object = n.key;
+		        	if (!inBounds(k))
+		            		return null;
+		        	var v: V = m.doRemove(k, null);
+		        	if (v != null)
+		            		return new AbstractMap.SimpleImmutableEntry[K,V](k, v);
+		    	}
+		}
+
+		private def removeHighest() : Map.Entry[K,V] {
+		    	for (;;) {
+		        	var n: Node[K,V] = hiNode();
+		        	if (n == null)
+		            		return null;
+		        	var k: Object = n.key;
+		        	if (!inBounds(k))
+		            		return null;
+		        	var v: Object = m.doRemove(k, null);
+		        	if (v != null)
+		            		return new AbstractMap.SimpleImmutableEntry[K,V](k, v);
+		    	}
+		}
+
+		/**
+		 * Submap version of ConcurrentSkipListMap.getNearEntry
+		 */
+		private def getNearEntry(key: Object, rel: Int) : Map.Entry[K,V] {
+		    	if (isDescending) { // adjust relation for direction
+		        	if ((rel & m.LT) == 0)
+		            		rel |= m.LT;
+		        	else
+		            		rel &= ~m.LT;
+		    	}
+		    	if (tooLow(key))
+		        	return ((rel & m.LT) != 0)? null : lowestEntry();
+		    	if (tooHigh(key))
+		        	return ((rel & m.LT) != 0)? highestEntry() : null;
+		    	for (;;) {
+		        	var n: Node[K,V]! = m.findNear(key, rel);
+		        	if (n == null || !inBounds(n.key))
+		            		return null;
+		        	var k: Object = n.key;
+		        	var v: Object = n.getValidValue();
+		        	if (v != null)
+		            		return new AbstractMap.SimpleImmutableEntry[K,V](k, v);
+		    	}
+		}
+
+		// Almost the same as getNearEntry, except for keys
+		private def getNearKey(key: Object, rel: Int) : Object {
+		    	if (isDescending) { // adjust relation for direction
+		        	if ((rel & m.LT) == 0)
+		            		rel |= m.LT;
+		        	else
+		            		rel &= ~m.LT;
+		    	}
+		    	if (tooLow(key)) {
+		        	if ((rel & m.LT) == 0) {
+		            		var n: ConcurrentSkipListMap.Node[K,V]! = loNode();
+		            		if (isBeforeEnd(n))
+		                		return n.key;
+		        	}
+		        	return null;
+		    	}
+		    	if (tooHigh(key)) {
+		        	if ((rel & m.LT) != 0) {
+		            		var n: ConcurrentSkipListMap.Node[K,V]! = hiNode();
+		            		if (n != null) {
+		                		last: Object = n.key;
+		                		if (inBounds(last))
+		                    			return last;
+		            		}
+		        	}
+		        	return null;
+		    	}
+		    	for (;;) {
+		        	var n: Node[K,V]! = m.findNear(key, rel);
+		        	if (n == null || !inBounds(n.key))
+		            		return null;
+		        	var k: Object = n.key;
+		        	var v: Object = n.getValidValue();
+		        	if (v != null)
+		            		return k;
+		    	}
+		} 
+
+		/* ----------------  Map API methods -------------- */
+		public def containsKey(key: Object) : Boolean {
+			if (key == null) throw new NullPointerException();
+		    	var k: Object = key;
+		    	return inBounds(k) && m.containsKey(k);
+		}
+
+		public def get(key: Object) : Object {
+		    	if (key == null) throw new NullPointerException();
+		    	var k: Object = key;
+		    	return ((!inBounds(k)) ? null : m.get(k));
+		}
+
+		public def put(key: Object, value: Object) : Object {
+		    	checkKeyBounds(key);
+		    	return m.put(key, value);
+		}
+
+		public def remove(key: Object) : Object {
+		    	var k: Object = key;
+		    	return (!inBounds(k))? null : m.remove(k);
+		}
+			
+		public def size() : Int {
+		    	var count: long = 0;
+		    	for (var n: ConcurrentSkipListMap.Node[K,V]! = loNode(); isBeforeEnd(n); n = n.next) {
+		        	if (n.getValidValue() != null)
+		            		++count;
+		    	}
+		    	return count >= Integer.MAX_VALUE? Integer.MAX_VALUE : count as Int;
+		}
+
+		public def isEmpty() : Boolean {
+		    	return !isBeforeEnd(loNode());
+		}
+
+		public def containsValue(value: Object) : Boolean {
+		    	if (value == null)
+		        	throw new NullPointerException();
+		    	for (var n: ConcurrentSkipListMap.Node[K,V]! = loNode(); isBeforeEnd(n); n = n.next) {
+		        	var v: Object = n.getValidValue();
+		        	if (v != null && value.equals(v))
+		            		return true;
+		    	}
+		    	return false;
+		}
+
+		public def clear(): void {
+			for (var n: ConcurrentSkipListMap.Node[K,V]! = loNode(); isBeforeEnd(n); n = n.next) {
+		        	if (n.getValidValue() != null)
+		            		m.remove(n.key);
+		    	}
+		} 
+
+		/* ----------------  ConcurrentMap API methods -------------- */
+		public def putIfAbsent(key: Object, value: Object) : Object {
+			checkKeyBounds(key);
+			return m.putIfAbsent(key, value);
+		}
+
+		public def remove(key: Object, value: Object) : Boolean {
+			var k : Object = key;
+			return inBounds(k) && m.remove(k, value);
+		}
+
+		public def replace(key: Object, oldValue: Object, newValue: Object) : boolean {
+			checkKeyBounds(key);
+		    	return m.replace(key, oldValue, newValue);
+		}
+
+		public def replace(key: Object, value: Object) : Object {
+		    	checkKeyBounds(key);
+		    	return m.replace(key, value);
+		}
+
+		/* ----------------  SortedMap API methods -------------- */
+		public def comparator() : Comparator[K] {
+		    	var cmp: Comparator[K] = m.comparator();
+		    	if (isDescending)
+				return Collections.reverseOrder(cmp);
+		    	else
+				return cmp;
+		} 
+
+		/**
+		 * Utility to create submaps, where given bounds override
+		 * unbounded(null) ones and/or are checked against bounded ones.
+		 */
+		private def newSubMap(fromKey: Object, fromInclusive: Boolean,
+		                              toKey: Object, toInclusive: Boolean) : SubMap[K,V]  {
+			if (isDescending) { // flip senses
+		        	var tk: Object = fromKey;
+		        	fromKey = toKey;
+		        	toKey = tk;
+		        	var ti: Boolean = fromInclusive;
+		        	fromInclusive = toInclusive;
+		        	toInclusive = ti;
+		    	}
+		    	if (lo != null) {
+		        	if (fromKey == null) {
+		            		fromKey = lo;
+		        	    	fromInclusive = loInclusive;
+		        	}
+		        	else {
+		            		var c: Int = m.compare(fromKey, lo);
+		            		if (c < 0 || (c == 0 && !loInclusive && fromInclusive))
+		                		throw new IllegalArgumentException("key out of range");
+		        	}
+		    	}
+		    	if (hi != null) {
+		        	if (toKey == null) {
+		            		toKey = hi;
+		            		toInclusive = hiInclusive;
+		        	}
+		        	else {
+		            		var c: Int = m.compare(toKey, hi);
+		            		if (c > 0 || (c == 0 && !hiInclusive && toInclusive))
+		                		throw new IllegalArgumentException("key out of range");
+		        	}
+		    	}
+		    	return new SubMap[K,V](m, fromKey, fromInclusive, toKey, toInclusive, isDescending);
+		}
+
+		public def subMap(fromKey: Object, fromInclusive: Boolean,
+		                  toKey: Object, toInclusive: Boolean) : SubMap[K,V] {
+			if (fromKey == null || toKey == null)
+		        	throw new NullPointerException();
+		    	return newSubMap(fromKey, fromInclusive, toKey, toInclusive);
+		}
+
+		public def headMap(toKey: Object, inclusive: Boolean) : SubMap[K,V] {
+			if (toKey == null)
+		        	throw new NullPointerException();
+		    	return newSubMap(null, false, toKey, inclusive);
+		}
+
+		public def tailMap(fromKey: Object, inclusive: Boolean) : SubMap[K,V] {
+			if (fromKey == null)
+		        	throw new NullPointerException();
+		    	return newSubMap(fromKey, inclusive, null, false);
+		}
+
+		public def subMap(fromKey: Object, toKey: K): SubMap[K,V] {
+		    	return subMap(fromKey, true, toKey, false);
+		}
+
+		public def headMap(toKey: Object) : SubMap[K,V] {
+		    	return headMap(toKey, false);
+		}
+
+		public def tailMap(fromKey: Object) : SubMap[K,V] {
+		    	return tailMap(fromKey, true);
+		}
+
+		public def descendingMap() : SubMap[K,V] {
+		    	return new SubMap[K,V](m, lo, loInclusive, hi, hiInclusive, !isDescending);
+		}
+
+		/* ----------------  Relational methods -------------- */
+		public def ceilingEntry(key: Object) : Map.Entry[K,V] {
+		    	return getNearEntry(key, (m.GT|m.EQ));
+		}
+
+		public def ceilingKey(key: Object) : Object {
+		    	return getNearKey(key, (m.GT|m.EQ));
+		}
+
+		public def lowerEntry(key: Object) : Map.Entry[K,V] {
+		    	return getNearEntry(key, (m.LT));
+		}
+
+		public def lowerKey(key: Object) : Object {
+			return getNearKey(key, (m.LT));
+		}
+
+		public def floorEntry(key: Object) : Map.Entry[K,V] {
+		    	return getNearEntry(key, (m.LT|m.EQ));
+		}
+
+		public def floorKey(key: Object) : Object {
+		    	return getNearKey(key, (m.LT|m.EQ));
+		}
+
+		public def higherEntry(key: Object) : Map.Entry[K,V] {
+		    	return getNearEntry(key, (m.GT));
+		}
+
+		public def higherKey(key: Object) : Object {
+		    	return getNearKey(key, (m.GT));
+		}
+
+		public def firstKey() : Object {
+		    	return isDescending? highestKey() : lowestKey();
+		}
+
+		public def lastKey() : Object {
+		    	return isDescending? lowestKey() : highestKey();
+		}
+
+		public def firstEntry() : Map.Entry[K,V] {
+		    	return isDescending? highestEntry() : lowestEntry();
+		}
+
+		public def lastEntry() : Map.Entry[K,V] {
+		    	return isDescending? lowestEntry() : highestEntry();
+		}
+
+		public def pollFirstEntry() : Map.Entry[K,V] {
+		    	return isDescending? removeHighest() : removeLowest();
+		}
+
+		public def pollLastEntry() : Map.Entry[K,V] {
+		    	return isDescending? removeLowest() : removeHighest();
+		}
+
+		/* ---------------- Submap Views -------------- */
+		public def keySet() : NavigableSet[K] {
+			var ks: KeySet[K] = keySetView;
+		    	return (ks != null) ? ks : (keySetView = new KeySet(this));
+		}
+
+		public def navigableKeySet() : NavigableSet[K] {
+		    	var ks: KeySet[K] = keySetView;
+		    	return (ks != null) ? ks : (keySetView = new KeySet(this));
+		}
+
+		public def values() : Collection[V] {    
+		    	var vs: Collection[V] = valuesView;
+		    	return (vs != null) ? vs : (valuesView = new Values(this));
+		}
+
+		public def entrySet() : Set[Map.Entry[K,V]] {
+			var es: Set[Map.Entry[K,V]] = entrySetView;
+		    	return (es != null) ? es : (entrySetView = new EntrySet(this));
+		}
+
+		public def descendingKeySet() : NavigableSet[K] {
+		    	return descendingMap().navigableKeySet();
+		}
+
+		def keyIterator() : Iterator[K] {
+		    	return new SubMapKeyIterator();
+		}
+
+		def valueIterator() : Iterator[V] {
+		    	return new SubMapValueIterator();
+		}
+
+		def entryIterator() : Iterator[Map.Entry[K,V]] {
+		    	return new SubMapEntryIterator();
+		} 
+
+		/**
+		 * Variant of main Iter class to traverse through submaps.
+		 */
+		abstract class SubMapIter[T] implements Iterator[T] {
+		    	// the last node returned by next()
+		    	var lastReturned: Node[K,V];
+		    	// the next node to return from next();
+		    	var next: Node[K,V];
+		    	// Cache of next value field to maintain weak consistency
+		    	var nextValue: Object;
+
+		    	def this() {
+		        	for (;;) {
+		            		next = isDescending ? hiNode() : loNode();
+		            		if (next == null)
+		                		break;
+				    		var x: Object = next.value;
+		            		if (x != null && x != next) {
+								if (! inBounds(next.key))
+		                	    		next = null;
+								else
+					    			nextValue = x;
+		                		break;
+		            		}
+		        	}
+		    	}
+
+		    	public def hasNext() : Boolean {
+		    		return next != null;
+		    	}
+
+		    	def advance() : void {
+		        	if (next == null)
+		            		throw new NoSuchElementException();
+					lastReturned = next;
+		        	if (isDescending)
+		            		descend();
+		        	else
+		            		ascend();
+		    	}
+
+		    	private def ascend() : void {
+		        	for (;;) {
+		            		next = next.next;
+		            		if (next == null)
+		                		break;
+			    			var x: Object = next.value;
+		            		if (x != null && x != next) {
+		                		if (tooHigh(next.key))
+		                    			next = null;
+		                		else
+				    			nextValue = x;
+		                		break;
+		            		}
+		        	}
+		    	}
+
+		    	private def descend() : void {
+		        	for (;;) {
+		            		next = m.findNear(lastReturned.key, LT);
+		            		if (next == null)
+		                		break;
+			    			var x: Object = next.value;
+		            		if (x != null && x != next) {
+		                		if (tooLow(next.key))
+		                    			next = null;
+								else
+		                    			nextValue = x;
+		                		break;
+		            		}
+		        	}
+		    	}
+
+		    	public def remove() : void {
+		        	var l: Node[K,V] = lastReturned;
+		        	if (l == null)
+		            		throw new IllegalStateException();
+		        	m.remove(l.key);
+					lastReturned = null;
+		    	}
+
+		}
+
+		/* FIXXXXXXXXXXXXX
+		final class SubMapValueIterator[T] extends SubMapIter[T] {
+		    	public def next() : Object {
+		        	var v: Object = nextValue;
+		        	advance();
+		        	return v;
+		    	}
+		}
+
+		final class SubMapKeyIterator[Object] extends SubMapIter[Object] {
+		    	public def next() : Object {
+		        	var n: Node[K,V] = next;
+		        	advance();
+		        	return n.key;
+		    	}
+		}
+
+		final class SubMapEntryIterator extends SubMapIter[Map.Entry[K,V]] {
+		    	public def next() : Map.Entry[K,V] {
+		        	var n: Node[K,V] = next;
+		        	var v: Object = nextValue;
+		        	advance();
+		        	return new AbstractMap.SimpleImmutableEntry[K,V](n.key, v);
+		    	}
+		}*/
+	}
 
 	public static def main(args: Rail[String]!) {
 		var test: Node[Int, Int]! = null ;
