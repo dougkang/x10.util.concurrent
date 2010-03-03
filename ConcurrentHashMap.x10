@@ -32,7 +32,11 @@ class ConcurrentHashMap {
 	var size:AtomicInteger;
  
 	static DEFAULT_NUM_BOXES:Int = 16;
- 
+	
+	transient var keySet: Set[Object];
+	transient var entrySet: Set[Map.Entry[Object, Object]];
+	transient var values: Collection[Object];
+	
 	/*Constructors*/
 	/**/
 	public def this(var numMaps:Int) {
@@ -222,6 +226,172 @@ class ConcurrentHashMap {
 		return size.get();
 	}
  
+ /*
+	
+	public def keySet() : Set[Object] {
+        var ks: Set[Object] = keySet;
+        return (ks != null) ? ks : (keySet = new KeySet());
+    }
+	
+	public def values() : Collection[Object] {
+        var vs: Collection[Object] = values;
+        return (vs != null) ? vs : (values = new Values());
+    }
+	
+	public def entrySet() : Set[Map.Entry[Object, Object]] {
+        var es: Set[Map.Entry[Object,Object]] = entrySet;
+        return (es != null) ? es : (entrySet = new EntrySet());
+    }
+	
+	public def keys() : Enumeration[Object] {
+        return new KeyIterator();
+    }
+	
+	public def elements() : Enumeration[Object] {
+        return new ValueIterator();
+    }
+	
+	final class KeySet extends AbstractSet[Object] {
+        public def iterator() : Iterator[Object] {
+            return new KeyIterator();
+        }
+        public def size() : Int {
+            return ConcurrentHashMap.this.size();
+        }
+        public def contains(o: Object) : Boolean {
+            return ConcurrentHashMap.this.containsKey(o);
+        }
+        public def remove(o: Object) : Boolean {
+            return ConcurrentHashMap.this.remove(o) != null;
+        }
+        public def clear() : void {
+            ConcurrentHashMap.this.clear();
+        }
+    }
+	
 	//values() looks like it will take some work, so I'll try to implement it later
- 
+	final class Values extends AbstractCollection[Object] {
+        public def iterator() : Iterator[Object] {
+            return new ValueIterator();
+        }
+        public def size() : Int {
+            return ConcurrentHashMap.this.size();
+        }
+        public def contains(o: Object) : Boolean {
+            return ConcurrentHashMap.this.containsValue(o);
+        }
+        public def clear() : void {
+            ConcurrentHashMap.this.clear();
+        }
+    }
+
+	final class EntrySet extends AbstractSet[Map.Entry[Object,Object]] {
+        public def iterator() : Iterator[Map.Entry[Object, Object]] {
+            return new EntryIterator();
+        }
+        public def contains(o: Object) : Boolean {
+            if (!(o instanceof Map.Entry[Object, Object]))
+                return false;
+            var e: Map.Entry[Object,Object] = o as Map.Entry[Object, Object];
+            var v: Object = ConcurrentHashMap.this.get(e.getKey());
+            return v != null && v.equals(e.getValue());
+        }
+        public def remove(o: Object) : Boolean {
+            if (!(o instanceof Map.Entry[Object, Object]))
+                return false;
+            var e: Map.Entry[Object, Object] = o as Map.Entry[Object, Object];
+            return ConcurrentHashMap.this.remove(e.getKey(), e.getValue());
+        }
+        public def size() : Int {
+            return ConcurrentHashMap.this.size();
+        }
+        public def clear() : void {
+            ConcurrentHashMap.this.clear();
+        }
+    }
+	
+    class EntryIterator[Object] implements Iterator[Object]
+    {
+		var boxIndex: Int;
+		var curIterator: Iterator[Map.Entry[Object, Object]];
+		def this() {
+			boxIndex = 0;
+			curIterator = hMaps[0].entries().iterator();
+		}
+        public def next() : Object { 
+			if(curIterator.hasNext()) {
+				return curIterator.next();
+			}
+			else if (boxIndex < numBoxes) {
+				for(var i: Int = boxIndex + 1; i < numBoxes; i++)
+				{
+					if(hMaps(i).size() > 0) {
+						curIterator = hMaps(i).entries().iterator();
+						return curIterator.next();
+					}
+				}
+			}
+			return null;
+		}
+        public def hasNext(): Boolean { 
+			if (boxIndex < numBoxes) {
+				if(curIterator.hasNext())
+					return true;
+				else {
+					// go through the rest of the HashMaps to find a valid entry
+					for(var i: Int = boxIndex + 1; i < numBoxes; i++)
+					{
+						if(hMaps(i).size() > 0)
+							return true;
+					}
+					// if the rest of the HashMaps are empty, return false
+					return false;
+				}
+			}
+			else
+				return false;
+		}
+    }
+	
+	final class KeyIterator[Object] extends EntryIterator[Object]
+    {
+		def this() { super(); }
+        public def next() : Object { 
+			if(curIterator.hasNext()) {
+				return curIterator.next().getKey();
+			}
+			else if (boxIndex < numBoxes) {
+				for(var i: Int = boxIndex + 1; i < numBoxes; i++)
+				{
+					if(hMaps(i).size() > 0) {
+						curIterator = hMaps(i).entries().iterator();
+						return curIterator.next().getKey();
+					}
+				}
+			}
+			return null;
+		}
+        public def hasNext() : Boolean { return super.hasNext(); }
+    }
+
+    final class ValueIterator[Object] extends KeyIterator[Object]
+    {
+		def this() { super(); }
+        public def next() : Object { 
+			if(curIterator.hasNext()) {
+				return curIterator.next().getValue();
+			}
+			else if (boxIndex < numBoxes) {
+				for(var i: Int = boxIndex + 1; i < numBoxes; i++)
+				{
+					if(hMaps(i).size() > 0) {
+						curIterator = hMaps(i).entries().iterator();
+						return curIterator.next().getValue();
+					}
+				}
+			}
+			return null;
+		}
+        public def hasNext() : Boolean { return super.hasNext(); }
+    }*/
 }
