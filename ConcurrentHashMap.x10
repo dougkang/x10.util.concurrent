@@ -1,14 +1,4 @@
-/*Things to know:
-putting a ! after a variable declaration solves some compiler issues
-var declared a changeable variable, val declares an unchangeable one
-() is used to index into an array
-[] is used to specify a type of a multi-type class
-git add files
-git commit -m "COMMENTS"
-git push git@github.com:dougkang/x10.util.concurrent.git to push
-need to change all the strings to objects, or better yet, to
-arbitrary key value variables like the HashMap underneath
-*/
+//equals inherited from Object, that is, a ConcurrentHashMap of a set of keys and values will not equal another one with the same keys and values
  
 import x10.io.Console;
 import x10.util.*;
@@ -21,30 +11,29 @@ import x10.util.concurrent.atomic.AtomicInteger;
  * @author Jessica Wang
  */
  
-class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
+class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 
 	//an array of non-concurrent hashmaps to store data in
-	var hMaps:Rail[HashMap[Object, Object]]!;
+	private var hMaps:Rail[HashMap[K, V]]!;
 	//the number of non-concurrent hashmaps in the array
-	val numBoxes:Int;
+	private val numBoxes:Int;
 	//an atomic integer to store the total number of elements in
 	//the array of non-concurrent hashmaps
-	var size:AtomicInteger;
+	private var size:AtomicInteger;
  
 	static DEFAULT_NUM_BOXES:Int = 16;
 	
 	/*Constructors*/
-	/**/
 	public def this(var numMaps:Int) {
 
 		if(numMaps < 1) numMaps = 1;
 		//construct a temporary railbuilder to build
 		//our array of hashmaps
-		var temp:RailBuilder[HashMap[Object, Object]]!
-		= new RailBuilder[HashMap[Object, Object]](numMaps);
+		var temp:RailBuilder[HashMap[K, V]]!
+		= new RailBuilder[HashMap[K, V]](numMaps);
 		//initialize the array
 		for(var i:Int = 0; i<numMaps; i++) {
-			temp.add(new HashMap[Object, Object]());
+			temp.add(new HashMap[K, V]());
 		}
 		hMaps = temp.result();
 		size = new AtomicInteger(0);
@@ -76,11 +65,11 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
  
 	// containsValue method
 	public def containsValue(val:Object):Boolean {
-		var entries:Set[Map.Entry[Object, Object]]! = entries();
-		var iterator:Iterator[Map.Entry[Object, Object]]! = entries.iterator();
+		var entries:Set[Map.Entry[K, V]]! = entries();
+		var iterator:Iterator[Map.Entry[K, V]]! = entries.iterator();
  
-		var entry:Map.Entry[Object, Object]!;
-		var curVal:Object;
+		var entry:Map.Entry[K, V]!;
+		var curVal:V;
 		while(iterator.hasNext()) {
 			entry = iterator.next();
 			curVal = entry.getValue();
@@ -91,7 +80,7 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 	}
  
 	//returns true if the key is stored in a hashmap, false otherwise
-	public safe def containsKey(var key:Object):Boolean{
+	public safe def containsKey(key:K):Boolean{
 		var temphash:Int = key.hashCode();
 		if(temphash < 0)
 			temphash *= -1;
@@ -100,12 +89,12 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 	}
  
 	//returns a Set with all the entries from all the HashMaps in it
-	public def entries():Set[Map.Entry[Object,Object]] {
-		var whole:HashMap[Object,Object]! = hMaps(0);
+	public def entries():Set[Map.Entry[K,V]] {
+		var whole:HashMap[K,V]! = hMaps(0);
 		for(var i:Int = 1; i<numBoxes; i++) {
-			var it: Iterator[Map.Entry[Object, Object]]! = hMaps(i).entries().iterator();
+			var it: Iterator[Map.Entry[K, V]]! = hMaps(i).entries().iterator();
 			while (it.hasNext()) {
-				var cur: Map.Entry[Object, Object]! = it.next();
+				var cur: Map.Entry[K, V]! = it.next();
 				whole.put(cur.getKey(), cur.getValue());
 			}
 		}
@@ -113,27 +102,27 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 	}
  
 	//returns the value attached to the key
-	public safe def get(key:Object):Box[Object] {
+	public safe def get(key:K):Box[V] {
 		var hash:Int = key.hashCode();
 		if(hash < 0)
 			hash *= -1;
 		val index:Int = hash%numBoxes;
-		var retVal:Box[Object];
-		//Console.OUT.println("The index of " + key.toString() + " is: " + index + " when computed with " + numBoxes + "boxes.");
+		var retVal:Box[V];
 		atomic retVal = hMaps(index).get(key);
 		if(retVal==null) return null;
 		else return retVal.value();
 	}
 
-	public safe def getOrElse(k: Object, orelse: Object) : Object {
-		var result: Box[Object] = get(k);
+	//methods from Map Interface
+	public safe def getOrElse(k: K, orelse: V) : V {
+		var result: Box[V] = get(k);
 		if (result == null)
 			return orelse;
 		return result.value;
 	}
 
-	public safe def getOrThrow(k: Object) : Object {
-		var result: Box[Object] = get(k);
+	public safe def getOrThrow(k: K) : V {
+		var result: Box[V] = get(k);
 		if (result == null)
 			throw new NoSuchElementException();
 		return result.value;
@@ -147,27 +136,26 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 			return true;
 	}
  
-	//skipping keys() for now because I don't know what an enumeration is
- 
 	//returns a Set with all the keys from all the HashMaps in it
-	public def keySet():Set[Object] {
-		var whole:HashMap[Object,Object]! = hMaps(0);
+	public def keySet():Set[K] {
+		var whole:HashMap[K,V]! = hMaps(0);
 		for(var i:Int = 1; i<numBoxes; i++) {
-			var it: Iterator[Map.Entry[Object, Object]]! = hMaps(i).entries().iterator();
+			var it: Iterator[Map.Entry[K, V]]! = hMaps(i).entries().iterator();
 			while (it.hasNext()) {
-				var cur: Map.Entry[Object, Object]! = it.next();
+				var cur: Map.Entry[K, V]! = it.next();
 				whole.put(cur.getKey(), cur.getValue());
 			}
 		}
 		return whole.keySet();
 	}
 
-	public def values() : Collection[Object] {
-        	var vs: Collection[Object]! = new HashSet[Object]();
+	//returns a Collection with all the values from the HashMaps in it
+	public def values() : Collection[V] {
+        	var vs: Collection[V]! = new HashSet[V]();
         	for(var i:Int = 0; i<numBoxes; i++) {
-			var it: Iterator[Map.Entry[Object, Object]]! = hMaps(i).entries().iterator();
+			var it: Iterator[Map.Entry[K, V]]! = hMaps(i).entries().iterator();
 			while (it.hasNext()) {
-				var cur: Map.Entry[Object, Object]! = it.next();
+				var cur: Map.Entry[K, V]! = it.next();
 				vs.add(cur.getValue());
 			}
 		}
@@ -176,10 +164,14 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 	
  
 	//put method
-	public def put(key:Object, val:Object):Box[Object] {
+	public def put(key:K, val:V):Box[V] {
 		//calculates the bucket to put the data in by
 		//modding the hash value with the number of buckets
-		prevVal:Object = (get(key) != null? get(key).value : null);
+		val prevVal:Box[V];
+		if (get(key) != null)
+			prevVal = get(key).value;
+		else
+			prevVal = null;
 		var hash:Int = key.hashCode();
 		if(hash < 0)
 			hash *= -1;
@@ -190,21 +182,22 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 		return prevVal;
 	}
  
+
 	//copies all of the mappings from the specified map to this one
 	//replaces any mappings that this map had for any of the keys
 	// currently in the specified map
-	public def putAll(map:Map[Object, Object]!):void {
-		mapset:Set[Map.Entry[Object,Object]]! = map.entries();
+	public def putAll(map:Map[K, V]!):void {
+		mapset:Set[Map.Entry[K,V]]! = map.entries();
  
-		var iterator:Iterator[Map.Entry[Object, Object]]! = mapset.iterator();
+		var iterator:Iterator[Map.Entry[K, V]]! = mapset.iterator();
 		while(iterator.hasNext()) {
-			var entry:Map.Entry[Object, Object]! = iterator.next();
+			var entry:Map.Entry[K, V]! = iterator.next();
 			put(entry.getKey(), entry.getValue());
 		}
 	}
  
 	//putIfAbsent method
-	public def putIfAbsent(key:Object, val:Object):Box[Object] {
+	public def putIfAbsent(key:K, val:V):Box[V] {
 		if (!containsKey(key))
 			return put(key, val);
 		else
@@ -212,12 +205,12 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 	}
  
 	//remove method	with 1 parameter
-	public def remove(key:Object):Box[Object] {
+	public def remove(key:K):Box[V] {
 		var hash:Int = key.hashCode();
 		if(hash < 0)
 			hash *= -1;
 		val index:Int = hash%numBoxes;
-		val retVal:Box[Object];
+		val retVal:Box[V];
 		retVal = hMaps(index).remove(key);
 		if(retVal==null) return null;
 		else {
@@ -227,24 +220,30 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 	}
  
 	//remove method with 2 parameters
-	public def remove(key:Object, val:Object):Boolean {
-		val retVal:Object = (get(key) != null ? get(key).value : null);
-		if(retVal!=null && val!= null && retVal.equals(val)) {
+	public def remove(key:K, val:V):Boolean {
+		val retVal:Box[V];
+		if (get(key) != null)
+			retVal = get(key).value;
+		else
+			retVal = null;
+		if(retVal!=null && val!= null && retVal.value.equals(val)) {
 			remove(key);
 			return true;
 		}
 		return false;
 	}
  
-	public def replace(key:Object, val:Object):Object {
+	public def replace(key:K, val:V): Box[V] {
 		if (containsKey(key)) {
 			return put(key, val);
 		}
 		else return null;
 	}
  
-	public def replace(key:Object, oldVal:Object, newVal:Object):Boolean {
-		if (get(key).value.equals(oldVal)) {
+	public def replace(key:K, oldVal:V, newVal:V):Boolean {
+		if (get(key) == null)
+			return false;
+		else if (get(key).value.equals(oldVal)) {
 			put(key, newVal);
 			return true;
 		}
@@ -255,15 +254,14 @@ class ConcurrentHashMap { //extends AbstractMap[Object, Object] {
 		return size.get();
 	}
 
-	//public def equals(map2: ConcurrentHashMap) : Boolean {
-	
-	public def keys() : Iterator[Object] {
-        	val keys: Set[Object]! = keySet();
+	// returns iterators instead of enumerations	
+	public def keys() : Iterator[K] {
+        	val keys: Set[K]! = keySet();
 		return keys.iterator();
     	}
 	
-	public def elements() : Iterator[Object] {
-        	val val: Collection[Object]! = values();
+	public def elements() : Iterator[V] {
+        	val val: Collection[V]! = values();
 		return val.iterator();
     	}
 }

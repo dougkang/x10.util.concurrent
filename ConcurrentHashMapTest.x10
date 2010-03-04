@@ -26,9 +26,9 @@ class ConcurrentHashMapTest {
 
     	var test:Test;
 
-	var map:ConcurrentHashMap;
-	var map1:ConcurrentHashMap;
-	var map2:ConcurrentHashMap;
+	var map:ConcurrentHashMap[String, String];
+	var map1:ConcurrentHashMap[String, String];
+	var map2:ConcurrentHashMap[String, String];
  
 	public static def main(args:Rail[String]!):void {
 		val testObject:ConcurrentHashMapTest! = new ConcurrentHashMapTest();
@@ -56,13 +56,13 @@ class ConcurrentHashMapTest {
 		testObject.testValues();
 
 		//testObject.testConcurrency();
-		//testObject.testPutAll();
+		testObject.testPutAll();
 		testObject.testEquals(); 
 
 	}
  
-	private def map5():ConcurrentHashMap {
-	    var map:ConcurrentHashMap! = new ConcurrentHashMap(5);
+	private def map5():ConcurrentHashMap[String, String] {
+	    var map:ConcurrentHashMap[String, String]! = new ConcurrentHashMap[String, String](5);
 		test.assertTrue(map.isEmpty());
         	
 		map.put("one", "A");
@@ -184,7 +184,7 @@ class ConcurrentHashMapTest {
     public def testGet():void {
     	map = map5();
         test.assertEquals("A", map.get("one").value as String);
-        var empty:ConcurrentHashMap = new ConcurrentHashMap();
+        var empty:ConcurrentHashMap[String, String] = new ConcurrentHashMap[String, String]();
         test.assertNull(map.get("anything"));
     }
 
@@ -192,7 +192,7 @@ class ConcurrentHashMapTest {
      *  isEmpty is true of empty map and false for non-empty
      */
     public def testIsEmpty():void {
-    	empty:ConcurrentHashMap! = new ConcurrentHashMap();
+    	empty:ConcurrentHashMap[String, String]! = new ConcurrentHashMap[String, String]();
         map = map5();
         test.assertTrue(empty.isEmpty());
         test.assertFalse(map.isEmpty());
@@ -217,7 +217,7 @@ class ConcurrentHashMapTest {
      */
     public def testKeySet():void {
     	map = map5();
-        s:Set[Object]! = map.keySet();
+        s:Set[String]! = map.keySet();
         test.assertEquals(5, s.size());
         test.assertTrue(s.contains("one"));
         test.assertTrue(s.contains("two"));
@@ -231,9 +231,9 @@ class ConcurrentHashMapTest {
      */
     public def testValuesToArray():void {
     	map = map5();
-        v:Collection[Object]! = map.values();
-        ar:Rail[Object]! = v.toRail();
-	s:ArrayList[Object]! = ArrayList.make[Object](v);
+        v:Collection[String]! = map.values();
+        ar:Rail[String]! = v.toRail();
+	s:ArrayList[String]! = ArrayList.make[String](v);
         test.assertEquals(5, ar.length);
         test.assertTrue(s.contains("A"));
         test.assertTrue(s.contains("B"));
@@ -247,8 +247,8 @@ class ConcurrentHashMapTest {
      */
     public def testEntrySetToArray():void {
     	map = map5();
-        var s:Set[Map.Entry[Object,Object]]! = map.entries();
-        var ar:Rail[Map.Entry[Object,Object]]!  = s.toRail();
+        var s:Set[Map.Entry[String,String]]! = map.entries();
+        var ar:Rail[Map.Entry[String,String]]!  = s.toRail();
         test.assertEquals(5, ar.length);
         for (var i: Int = 0; i < 5; ++i) {
             test.assertTrue(map.containsKey(ar(i).getKey()));
@@ -261,7 +261,7 @@ class ConcurrentHashMapTest {
      */
     public def testValues():void {
         map = map5();
-        s:Collection[Object]! = map.values();
+        s:Collection[String]! = map.values();
         test.assertEquals(5, s.size());
         test.assertTrue(s.contains("A"));
         test.assertTrue(s.contains("B"));
@@ -276,11 +276,11 @@ class ConcurrentHashMapTest {
      */
     public def testEntrySet():void {
         map = map5();
-        s:Set[Map.Entry[Object,Object]]! = map.entries();
+        s:Set[Map.Entry[String,String]]! = map.entries();
         test.assertEquals(5, s.size());
-        it:Iterator[Map.Entry[Object,Object]]! = s.iterator();
+        it:Iterator[Map.Entry[String,String]]! = s.iterator();
         while (it.hasNext()) {
-            var e: Map.Entry[Object,Object]! = it.next() as Map.Entry[Object,Object];
+            var e: Map.Entry[String,String]! = it.next() as Map.Entry[String,String];
             test.assertTrue(
                        (e.getKey().equals("one") && e.getValue().equals("A")) ||
                        (e.getKey().equals("two") && e.getValue().equals("B")) ||
@@ -292,9 +292,9 @@ class ConcurrentHashMapTest {
 
     /**
      *   putAll adds all key-value pairs from the given map
-     *
+     */
     public def testPutAll():void {
-        var empty:ConcurrentHashMap! = new ConcurrentHashMap();
+        var empty:ConcurrentHashMap[String, String]! = new ConcurrentHashMap[String, String]();
         map = map5();
         empty.putAll(map);
         test.assertEquals(5, empty.size());
@@ -303,7 +303,7 @@ class ConcurrentHashMapTest {
         test.assertTrue(empty.containsKey("three"));
         test.assertTrue(empty.containsKey("four"));
         test.assertTrue(empty.containsKey("five"));
-    }*/
+    }
 
     /**
      *   putIfAbsent works when the given key is not present
@@ -388,7 +388,7 @@ class ConcurrentHashMapTest {
      */
     public def testSize():void  {
         map = map5();
-        var empty:ConcurrentHashMap! = new ConcurrentHashMap();
+        var empty:ConcurrentHashMap[String, String]! = new ConcurrentHashMap[String, String]();
         test.assertEquals(0, empty.size());
         test.assertEquals(5, map.size());
     }
@@ -610,7 +610,7 @@ class ConcurrentHashMapTest {
      * remove(x, null) returns false
      */
     public def testRemove3():void {
-        var c:ConcurrentHashMap!  = new ConcurrentHashMap(5);
+        var c:ConcurrentHashMap[String,String]!  = new ConcurrentHashMap[String,String](5);
         c.put("sadsdf", "asdads");
         test.assertFalse(c.remove("sadsdf", null));
     }
