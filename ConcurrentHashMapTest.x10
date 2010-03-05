@@ -115,20 +115,14 @@ class ConcurrentHashMapTest {
      *  Maps with same contents are equal
      */
     public def testEquals():void {
-	var map3:HashMap[String, String]! = new HashMap[String,String](2);
-	var map4:HashMap[String, String]! = new HashMap[String,String](2);
-	map3.put("1","one");
-	map3.put("2","two");
-	map4.put("1","one");
-	map4.put("2","two");
-	test.assertTrue(map3.equals(map3)); 
-
         map1 = map5();
         map2 = map5();
 	test.assertTrue(map1.equals(map1));
-	//test.assertTrue(map2.equals(map1));
+	test.assertTrue(map2.equals(map1));
+	test.assertTrue(map1.equals(map2));
 
         map1.clear();
+	test.assertTrue(map1.equals(map1));
         test.assertFalse(map1.equals(map2));
 	test.assertFalse(map2.equals(map1));
     }

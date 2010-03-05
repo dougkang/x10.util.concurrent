@@ -1,5 +1,3 @@
-//equals inherited from Object, that is, a ConcurrentHashMap of a set of keys and values will not equal another one with the same keys and values
- 
 import x10.io.Console;
 import x10.util.*;
 import x10.util.concurrent.atomic.AtomicInteger;
@@ -47,6 +45,52 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
  
 	/*public methods for Concurrent HashMap*/
  
+	//overriding equals function in Object
+	public def equals(o: Object) : Boolean {
+		if (this == o)
+			return true;
+		else if (!(o instanceof ConcurrentHashMap[K,V]))
+			return false;
+		else {
+			var map2: ConcurrentHashMap[K,V]! = o as ConcurrentHashMap[K,V];
+			if (this.size() == map2.size()) {
+				// compare values inside only if sizes are the same
+				var s:Set[Map.Entry[K,V]]! = map2.entries();		
+				var it:Iterator[Map.Entry[K,V]]! = s.iterator();
+			
+				while(it.hasNext()) {
+					var cur: Map.Entry[K,V]! = it.next();
+					var key: K = cur.getKey();
+					var matchval: Box[V] = this.get(key);
+					if(matchval == null)
+						return false;
+					else if(!cur.getValue().equals(matchval.value))
+					{
+						return false;
+					}
+				}
+			
+				s = this.entries();
+				it = s.iterator();
+			
+				while(it.hasNext()) {
+					var cur: Map.Entry[K,V]! = it.next();
+					var key: K = cur.getKey();
+					var matchval: Box[V] = map2.get(key);
+					if(matchval == null)
+						return false;
+					else if(!cur.getValue().equals(matchval.value))
+					{
+						return false;
+					}
+				}
+				// equal if both sets map to each other exactly
+				return true;
+			}
+		}
+		return false;
+	}
+
 	//clears all the hash maps in this data structure
 	public def clear():void {
 		for(var i:Int = 0; i<numBoxes; i++) {
