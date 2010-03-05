@@ -1660,34 +1660,34 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
         	if (fromKey == null)
             		throw new NullPointerException();
         	return new SubMap[K,V] (this, fromKey, inclusive, null, false, false);
-    	} */
+    	} */	// FIXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
     	/**
      	 * @throws ClassCastException {@inheritDoc}
      	 * @throws NullPointerException if {@code fromKey} or {@code toKey} is null
      	 * @throws IllegalArgumentException {@inheritDoc}
-     	 *
+     	 */
     	public def subMap(fromKey: K, toKey: K) : ConcurrentNavigableMap[K,V] {
         	return subMap(fromKey, true, toKey, false);
-    	} */
+    	} 
 
     	/**
      	 * @throws ClassCastException {@inheritDoc}
      	 * @throws NullPointerException if {@code toKey} is null
      	 * @throws IllegalArgumentException {@inheritDoc}
-     	 *
+     	 */
     	public def headMap(toKey: K) : ConcurrentNavigableMap[K,V] {
         	return headMap(toKey, false);
-    	} */
+    	} 
 
     	/**
      	 * @throws ClassCastException {@inheritDoc}
      	 * @throws NullPointerException if {@code fromKey} is null
      	 * @throws IllegalArgumentException {@inheritDoc}
-     	 *
+     	 */
     	public def tailMap(fromKey: K) : ConcurrentNavigableMap[K,V] {
         	return tailMap(fromKey, true);
-    	} */
+    	}
 
 
 	/* ---------------- Relational operations -------------- */
@@ -1844,19 +1844,19 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
     	/**
      	 * Base of iterator classes:
      	 */
-    	/*class Iter[T] implements Iterator[T] {
+    	class Iter[T] implements Iterator[T] {
         	// the last node returned by next()
-        	//var lastReturned: Node[K,V];
+        	var lastReturned: Node[K,V];
         	// the next node to return from next();
         	var next: Node[K,V];
 	 	// Cache of next value field to maintain weak consistency
 		var nextValue: Object;
-
+		/*
         	// Initializes ascending iterator for entire range.
-        	/*def make() {                	FIXXXXXXXXXXXXXXXXXXXXXXXXX
+        	def make() {                	// FIXXXXXXXXXXXXXXXXXXXXXXXXX
             		for (;;) {
-				//next = findFirst();
-				//next = null; // FIXXXX                		
+				next = findFirst();
+				next = null;              		
 				if (next == null)
                     			break;
                 		var x: Object = next.value;
@@ -1865,14 +1865,14 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
                     			break;
 				}
             		}
-        	}*/
-
-        	/*public def hasNext() : Boolean {
+        	} */
+		
+        	public def hasNext() : Boolean {
             		return next != null;
-        	}*/
-
+        	} 
+		
         	// Advances next to higher entry.
-        	/*def advance() : void {
+        	def advance() : void {
             		if (next == null)
                 		throw new NoSuchElementException();
 	    		lastReturned = next;
@@ -1887,7 +1887,7 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
 				}
             		}
         	}
-
+		
         	public def remove() : void {
             		var l: Node[K,V]! = lastReturned;
             		if (l == null)
@@ -1896,37 +1896,37 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
             		// unlink from here. Using remove is fast enough.
             		ConcurrentSkipListMap.this.remove(l.key);
 	    		lastReturned = null;
-        	}
+        	} 
 
-    	}*/
-/*
-    	final class ValueIterator extends Iter[V] {
+    	}
+
+    	final class ValueIterator extends Iter[K,V,V] {
         	public def next() : V {
-            		var v: V = nextValue;
+            		var v: V = nextValue as V;
             		advance();
             		return v;
         	}
     	}
-
-    	final class KeyIterator extends Iter[K] {
+	
+    	final class KeyIterator extends Iter[K,V,K] {
         	public def next() : K {
-            		var n: Node[K,V] = next;
+            		var n: Node[K,V]! = next;
             		advance();
-            		return n.key;
+            		return n.key as K;
+        	}
+    	} 
+
+    	final class EntryIterator extends Iter[K,V,Map.Entry[K,V]] {
+        	public def next() : Map.Entry[K,V] {
+            		var n: Node[K,V]! = next;
+            		var v: V = nextValue as V;
+            		advance();
+            		return new AbstractMap.SimpleImmutableEntry[K,V](n.key as K, v);
         	}
     	}
 
-    	final class EntryIterator extends Iter[Map.Entry[K,V]] {
-        	public def next() : Map.Entry[K,V] {
-            		var n: Node[K,V] = next;
-            		var v: V = nextValue;
-            		advance();
-            		return new AbstractMap.SimpleImmutableEntry[K,V](n.key, v);
-        	}
-    	}*/
-
     	// Factory methods for iterators needed by ConcurrentSkipListSet etc
-	/*
+	
     	def keyIterator() : Iterator[K] {
         	return new KeyIterator();
     	}
@@ -1937,7 +1937,7 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
 
     	def entryIterator() : Iterator[Map.Entry[K,V]] {
     	    return new EntryIterator();
-    	} */
+    	} 
 	
 
 	/* ---------------- View Classes -------------- */
@@ -2727,31 +2727,30 @@ public class ConcurrentSkipListMap[K,V] implements ConcurrentNavigableMap[K,V] {
 
 		}
 
-		/* FIXXXXXXXXXXXXX
-		final class SubMapValueIterator[T] extends SubMapIter[T] {
-		    	public def next() : Object {
+		final class SubMapValueIterator[V] extends SubMapIter[K,V,K,V,V] {
+		    	public def next() : V {
 		        	var v: Object = nextValue;
 		        	advance();
 		        	return v;
 		    	}
-		}
-
-		final class SubMapKeyIterator[Object] extends SubMapIter[Object] {
-		    	public def next() : Object {
+		} 
+		
+		final class SubMapKeyIterator[K] extends SubMapIter[K,V,K,V,K] {
+		    	public def next() : K {
 		        	var n: Node[K,V] = next;
 		        	advance();
 		        	return n.key;
 		    	}
-		}
-
-		final class SubMapEntryIterator extends SubMapIter[Map.Entry[K,V]] {
+		} 
+		
+		final class SubMapEntryIterator extends SubMapIter[K,V,K,V,Map.Entry[K,V]] {
 		    	public def next() : Map.Entry[K,V] {
 		        	var n: Node[K,V] = next;
 		        	var v: Object = nextValue;
 		        	advance();
 		        	return new AbstractMap.SimpleImmutableEntry[K,V](n.key, v);
 		    	}
-		}*/
+		}
 	}
 
 	public static def main(args: Rail[String]!) {
