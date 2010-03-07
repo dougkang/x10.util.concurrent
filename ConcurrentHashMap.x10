@@ -1,27 +1,39 @@
+package x10.util.concurrent;
 import x10.io.Console;
 import x10.util.*;
 import x10.util.concurrent.atomic.AtomicInteger;
  
- 
 /**
- * ConcurrentHashMap that should perform normal hashmap functions atomically.
- * @author Ryan Evans
- * @author Jessica Wang
+ * A concurrent form of HashMap that should perform normal hashmap functions atomically.
+ *
+ * Parameters for the class:
+ * <K> the type of keys maintained by this map
+ * <V> the type of mapped values
+ *
+ * Authors:
+ * Ryan Evans
+ * Jessica Wang
+ * UCLA CS130 Winter 2010
+ * 
+ * Class/Comments Reference:
+ * openjdk-6-src-b18-16_feb_2010
  */
  
 class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 
-	//an array of non-concurrent hashmaps to store data in
+	//a rail of non-concurrent hashmaps to store data in
 	private var hMaps:Rail[HashMap[K, V]]!;
-	//the number of non-concurrent hashmaps in the array
+	//the number of non-concurrent hashmaps in the rail
 	private val numBoxes:Int;
-	//an atomic integer to store the total number of elements in
-	//the array of non-concurrent hashmaps
+	//an atomic integer to store the total number of elements in the array of non-concurrent hashmaps
 	private var size:AtomicInteger;
  
+	//static default number of non-concurrent hashmaps in the rail
 	static DEFAULT_NUM_BOXES:Int = 16;
 	
-	/*Constructors*/
+	/*
+	 * Constructors: takes in parameter specifying number of non-concurrent hashmaps
+	 */
 	public def this(var numMaps:Int) {
 
 		if(numMaps < 1) numMaps = 1;
@@ -42,10 +54,11 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		this(DEFAULT_NUM_BOXES);
 	}
  
- 
-	/*public methods for Concurrent HashMap*/
- 
-	//overriding equals function in Object
+	/*
+	 * This function overrides the equals function in Object
+	 * Should return true only if object is of type ConcurrentHashMap, has the
+	 * same size and has the exactly key-value pairs as this ConcurrentHashMap.
+	 */
 	public def equals(o: Object) : Boolean {
 		if (this == o)
 			return true;
@@ -91,8 +104,10 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return false;
 	}
 
-	//clears all the hash maps in this data structure
-	public def clear():void {
+	/*
+	 * Removes all mappings from this map.
+	 */
+	public def clear() : void {
 		for(var i:Int = 0; i<numBoxes; i++) {
 		//this needs to have an atomic in front of it
 		//just need to add safe keyword to clear method
@@ -102,13 +117,17 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		size.set(0);
 	}
  
-	// contains method	
-	public def contains(val:Object):Boolean {
+	/* 
+	 * Legacy method from Java testing if some key maps into the specified value in this table.
+	 */
+	public def contains(val: Object) : Boolean {
 		return containsValue(val);	
 	}
  
-	// containsValue method
-	public def containsValue(val:Object):Boolean {
+	/*
+	 * Returns true if this map maps one or more keys to the specified value.
+	 */
+	public def containsValue(val: Object) : Boolean {
 		var entries:Set[Map.Entry[K, V]]! = entries();
 		var iterator:Iterator[Map.Entry[K, V]]! = entries.iterator();
  
@@ -123,8 +142,10 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return false;
 	}
  
-	//returns true if the key is stored in a hashmap, false otherwise
-	public safe def containsKey(key:K):Boolean{
+	/*
+	 * Tests if the specified object is a key in this table.
+	 */
+	public safe def containsKey(key: K) : Boolean{
 		var temphash:Int = key.hashCode();
 		if(temphash < 0)
 			temphash *= -1;
@@ -132,8 +153,10 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return hMaps(index).containsKey(key);
 	}
  
-	//returns a Set with all the entries from all the HashMaps in it
-	public def entries():Set[Map.Entry[K,V]] {
+	/*
+	 * Returns a set of the mappings contained in this map.
+ 	 */
+	public def entries() : Set[Map.Entry[K,V]] {
 		var whole:HashMap[K,V]! = hMaps(0);
 		for(var i:Int = 1; i<numBoxes; i++) {
 			var it: Iterator[Map.Entry[K, V]]! = hMaps(i).entries().iterator();
@@ -145,7 +168,9 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return whole.entries();
 	}
  
-	//returns the value attached to the key
+	/*
+	 * Returns the value to which the specified key is mapped in this table.
+	 */
 	public safe def get(key:K):Box[V] {
 		var hash:Int = key.hashCode();
 		if(hash < 0)
@@ -157,7 +182,9 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		else return retVal.value();
 	}
 
-	//methods from Map Interface
+	/* 
+	 * Method from Map Interface: Returns the value from the key-mapping or V if key returns no mapping. 
+	 */
 	public safe def getOrElse(k: K, orelse: V) : V {
 		var result: Box[V] = get(k);
 		if (result == null)
@@ -165,6 +192,10 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return result.value;
 	}
 
+	/*
+	 * Returns the value from the key-mapping or throw a NoSuchElementException() exception if 
+	 * key returns no mapping.
+	 */
 	public safe def getOrThrow(k: K) : V {
 		var result: Box[V] = get(k);
 		if (result == null)
@@ -172,16 +203,20 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return result.value;
 	}
  
-	//returns true if the hashmap has no elements, false otherwise
-	public def isEmpty():Boolean {
+	/*
+	 * Returns true if this map contains no key-value mappings.
+	 */
+	public def isEmpty() : Boolean {
 		if(size.get() != 0)
 			return false;
 		else
 			return true;
 	}
  
-	//returns a Set with all the keys from all the HashMaps in it
-	public def keySet():Set[K] {
+	/*
+	 * Returns a set view of the keys contained in this map.
+	 */
+	public def keySet() : Set[K] {
 		var whole:HashMap[K,V]! = hMaps(0);
 		for(var i:Int = 1; i<numBoxes; i++) {
 			var it: Iterator[Map.Entry[K, V]]! = hMaps(i).entries().iterator();
@@ -193,7 +228,9 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return whole.keySet();
 	}
 
-	//returns a Collection with all the values from the HashMaps in it
+	/*
+	 * Returns a collection view of the values contained in this map.
+	 */
 	public def values() : Collection[V] {
         	var vs: Collection[V]! = new HashSet[V]();
         	for(var i:Int = 0; i<numBoxes; i++) {
@@ -207,8 +244,10 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
     	}
 	
  
-	//put method
-	public def put(key:K, val:V):Box[V] {
+	/*
+	 * Maps the specified key to the specified value in this table.
+	 */
+	public def put(key:K, val:V) : Box[V] {
 		//calculates the bucket to put the data in by
 		//modding the hash value with the number of buckets
 		val prevVal:Box[V];
@@ -227,10 +266,12 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 	}
  
 
-	//copies all of the mappings from the specified map to this one
-	//replaces any mappings that this map had for any of the keys
-	// currently in the specified map
-	public def putAll(map:Map[K, V]!):void {
+	/*
+	 * Copies all of the mappings from the specified map to this one
+ 	 * replaces any mappings that this map had for any of the keys
+	 * currently in the specified map.
+	 */
+	public def putAll(map: Map[K, V]!) : void {
 		mapset:Set[Map.Entry[K,V]]! = map.entries();
  
 		var iterator:Iterator[Map.Entry[K, V]]! = mapset.iterator();
@@ -240,16 +281,20 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		}
 	}
  
-	//putIfAbsent method
-	public def putIfAbsent(key:K, val:V):Box[V] {
+	/* 
+	 * If the specified key is not already associated with a value, associate it with the given value.
+	 */
+	public def putIfAbsent(key: K, val: V) : Box[V] {
 		if (!containsKey(key))
 			return put(key, val);
 		else
 			return get(key);
 	}
  
-	//remove method	with 1 parameter
-	public def remove(key:K):Box[V] {
+	/*
+	 * Removes the key (and its corresponding value) from this table.
+	 */
+	public def remove(key: K) : Box[V] {
 		var hash:Int = key.hashCode();
 		if(hash < 0)
 			hash *= -1;
@@ -263,8 +308,10 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		}
 	}
  
-	//remove method with 2 parameters
-	public def remove(key:K, val:V):Boolean {
+	/*
+	 * Remove entry for key only if currently mapped to given value.
+	 */
+	public def remove(key: K, val: V) : Boolean {
 		val retVal:Box[V];
 		if (get(key) != null)
 			retVal = get(key).value;
@@ -277,14 +324,20 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		return false;
 	}
  
-	public def replace(key:K, val:V): Box[V] {
+	/*
+	 * Replace entry for key only if currently mapped to some value.
+	 */
+	public def replace(key: K, val: V) : Box[V] {
 		if (containsKey(key)) {
 			return put(key, val);
 		}
 		else return null;
 	}
  
-	public def replace(key:K, oldVal:V, newVal:V):Boolean {
+	/*
+	 * Replace entry for key only if currently mapped to given value.
+	 */
+	public def replace(key: K, oldVal: V, newVal: V) : Boolean {
 		if (get(key) == null)
 			return false;
 		else if (get(key).value.equals(oldVal)) {
@@ -293,17 +346,25 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 		}
 		else return false;
 	}
- 
-	public def size():Int {
+ 	
+	/*
+	 * Returns the number of key-value mappings in this map.
+	 */
+	public def size() : Int {
 		return size.get();
 	}
 
-	// returns iterators instead of enumerations	
+	/*
+	 * Returns an iterator of the keys in this table.
+	 */
 	public def keys() : Iterator[K] {
         	val keys: Set[K]! = keySet();
 		return keys.iterator();
     	}
 	
+	/*
+	 * Returns an iterator of the values in this table.
+	 */
 	public def elements() : Iterator[V] {
         	val val: Collection[V]! = values();
 		return val.iterator();
