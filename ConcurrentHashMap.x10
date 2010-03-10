@@ -30,30 +30,41 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
  
 	//static default number of non-concurrent hashmaps in the rail
 	static DEFAULT_NUM_BOXES:Int = 16;
-	
-	/*
-	 * Constructors: takes in parameter specifying number of non-concurrent hashmaps
-	 */
-	public def this(var numMaps:Int) {
+	//static default size of each of the hashmaps in the rail
+	static INITIAL_CAPACITY:Int = 16;
 
-		if(numMaps < 1) numMaps = 1;
+	/*
+	 * Constructor: takes in two parameters 
+	 */
+	public def this(var initialCapacity: Int, var concurrencyLevel: Int) {
+		if(concurrencyLevel < 1) concurrencyLevel = 1;
 		//construct a temporary railbuilder to build
 		//our array of hashmaps
 		var temp:RailBuilder[HashMap[K, V]]!
-		= new RailBuilder[HashMap[K, V]](numMaps);
+		= new RailBuilder[HashMap[K, V]](concurrencyLevel);
 		//initialize the array
-		for(var i:Int = 0; i<numMaps; i++) {
-			temp.add(new HashMap[K, V]());
+		for(var i:Int = 0; i<concurrencyLevel; i++) {
+			temp.add(new HashMap[K, V](initialCapacity));
 		}
 		hMaps = temp.result();
 		size = new AtomicInteger(0);
-		numBoxes = numMaps;
-		}
- 
-	public def this() {
-		this(DEFAULT_NUM_BOXES);
+		numBoxes = concurrencyLevel;
+	}		
+
+	/*
+	 * Constructor: takes in parameter of initial sizes of each non-concurrent hashmap
+	 */
+	public def this(var initialCapacity:Int) {
+		this(initialCapacity, DEFAULT_NUM_BOXES);
 	}
  
+	/*
+	 * Constructor with no parameters
+	 */
+	public def this() {
+		this(INITIAL_CAPACITY, DEFAULT_NUM_BOXES);
+	}
+
 	/*
 	 * This function overrides the equals function in Object
 	 * Should return true only if object is of type ConcurrentHashMap, has the
@@ -115,13 +126,6 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 			hMaps(i).clear();
 		}
 		size.set(0);
-	}
- 
-	/* 
-	 * Legacy method from Java testing if some key maps into the specified value in this table.
-	 */
-	public def contains(val: Object) : Boolean {
-		return containsValue(val);	
 	}
  
 	/*

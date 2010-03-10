@@ -45,7 +45,6 @@ class ConcurrentHashMapTest {
 		testObject.testRemove2();
 		testObject.testRemove3();
 		testObject.testSize();
-		testObject.testContains();
 		testObject.testKeySet();
 		testObject.testEntrySetToArray();
 		testObject.testEntrySet();
@@ -125,15 +124,6 @@ class ConcurrentHashMapTest {
 	test.assertTrue(map1.equals(map1));
         test.assertFalse(map1.equals(map2));
 	test.assertFalse(map2.equals(map1));
-    }
-
-    /**
-     *  contains returns true for contained value
-     */
-    public def testContains():void {
-        map = map5();
-	test.assertTrue(map.contains("A"));
-        test.assertFalse(map.contains("Z"));
     }
 
     /**
