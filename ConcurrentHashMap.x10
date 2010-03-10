@@ -150,9 +150,7 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 	 * Tests if the specified object is a key in this table.
 	 */
 	public safe def containsKey(key: K) : Boolean{
-		var temphash:Int = key.hashCode();
-		if(temphash < 0)
-			temphash *= -1;
+		var temphash:Int = Math.abs(key.hashCode());
 		val index:Int = temphash%numBoxes;
 		return hMaps(index).containsKey(key);
 	}
@@ -176,14 +174,11 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 	 * Returns the value to which the specified key is mapped in this table.
 	 */
 	public safe def get(key:K):Box[V] {
-		var hash:Int = key.hashCode();
-		if(hash < 0)
-			hash *= -1;
+		var hash:Int = Math.abs(key.hashCode());
 		val index:Int = hash%numBoxes;
 		var retVal:Box[V];
 		atomic retVal = hMaps(index).get(key);
-		if(retVal==null) return null;
-		else return retVal.value();
+		return retVal;
 	}
 
 	/* 
@@ -259,9 +254,7 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 			prevVal = get(key).value;
 		else
 			prevVal = null;
-		var hash:Int = key.hashCode();
-		if(hash < 0)
-			hash *= -1;
+		var hash:Int = Math.abs(key.hashCode());
 		val index:Int = hash%numBoxes;
 		atomic hMaps(index).put(key, val);
 		if(prevVal==null)
@@ -299,9 +292,7 @@ class ConcurrentHashMap[K,V] extends AbstractMap[K, V] {
 	 * Removes the key (and its corresponding value) from this table.
 	 */
 	public def remove(key: K) : Box[V] {
-		var hash:Int = key.hashCode();
-		if(hash < 0)
-			hash *= -1;
+		var hash:Int = Math.abs(key.hashCode());
 		val index:Int = hash%numBoxes;
 		val retVal:Box[V];
 		retVal = hMaps(index).remove(key);
