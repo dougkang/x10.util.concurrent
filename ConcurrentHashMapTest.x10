@@ -203,11 +203,11 @@ class ConcurrentHashMapTest {
     	map = map5();
         s:Set[String]! = map.keySet();
         test.assertEquals(5, s.size());
-        test.assertTrue(s.contains("one"));
-        test.assertTrue(s.contains("two"));
-        test.assertTrue(s.contains("three"));
-        test.assertTrue(s.contains("four"));
-        test.assertTrue(s.contains("five"));
+        test.assertTrue(s.containsValue("one"));
+        test.assertTrue(s.containsValue("two"));
+        test.assertTrue(s.containsValue("three"));
+        test.assertTrue(s.containsValue("four"));
+        test.assertTrue(s.containsValue("five"));
     }
 
     /**
@@ -219,11 +219,11 @@ class ConcurrentHashMapTest {
         ar:Rail[String]! = v.toRail();
 	s:ArrayList[String]! = ArrayList.make[String](v);
         test.assertEquals(5, ar.length);
-        test.assertTrue(s.contains("A"));
-        test.assertTrue(s.contains("B"));
-        test.assertTrue(s.contains("C"));
-        test.assertTrue(s.contains("D"));
-        test.assertTrue(s.contains("E"));
+        test.assertTrue(s.containsValue("A"));
+        test.assertTrue(s.containsValue("B"));
+        test.assertTrue(s.containsValue("C"));
+        test.assertTrue(s.containsValue("D"));
+        test.assertTrue(s.containsValue("E"));
     } 
 
     /**
@@ -247,11 +247,11 @@ class ConcurrentHashMapTest {
         map = map5();
         s:Collection[String]! = map.values();
         test.assertEquals(5, s.size());
-        test.assertTrue(s.contains("A"));
-        test.assertTrue(s.contains("B"));
-        test.assertTrue(s.contains("C"));
-        test.assertTrue(s.contains("D"));
-        test.assertTrue(s.contains("E"));
+        test.assertTrue(s.containsValue"A"));
+        test.assertTrue(s.containsValue("B"));
+        test.assertTrue(s.containsValue("C"));
+        test.assertTrue(s.containsValue("D"));
+        test.assertTrue(s.containsValue("E"));
     } 
 
 
