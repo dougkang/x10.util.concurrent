@@ -1,0 +1,1017 @@
+/**
+ * A concurrent form of ArrayList performs mutable functions atomically by
+ * making a copy of the entire array each time a function is called.
+ *
+ *
+ * Authors:
+ * Ryan Evans
+ * Ha Young Park
+ * UCLA CS130 Winter 2010
+ *
+ * Class/Comments Reference:
+ * openjdk-6-src-b18-16_feb_2010
+ */
+
+//readObject not implemented because X10 has not inputstream
+//writeObject not implemented because X10 has no outputstream
+//equals not implemented because C++ code doesn't compile
+//clone not implemented because there is no clone method for objects in X10
+
+import x10.io.Console;
+import x10.util.*;
+import x10.lang.ValRail;
+import x10.lang.UnsupportedOperationException;
+
+class CopyOnWriteArrayList implements List[Object]{
+	//this is the current copy of the array
+	//a copy is made on every call that modifies
+	//the array
+	//global is there to make toString():String work
+	global private var mainArray:ValRail[Object];
+	
+	//---------------------------------------------------------------------
+	//Private helper methods
+	//---------------------------------------------------------------------
+	
+	//takes in a ValRail and returns a duplicate copy
+	private proto def copyOf(var old:ValRail[Object]):ValRail[Object] {
+		var temp:ValRailBuilder[Object]! = new ValRailBuilder[Object](0);
+		for(var i:Int = 0; i < old.length; i++) {
+			temp.add(old(i));
+		}
+		return temp.result();
+	}
+
+	//takes in a ValRail and returns a ValRailBuilder with all the
+	//elements from the VailRail added to it
+	private def getBuilder(var old:ValRail[Object]):ValRailBuilder[Object] {
+		var temp:ValRailBuilder[Object]! = new ValRailBuilder[Object](0);
+		for(var i:Int = 0; i < old.length; i++) {
+			temp.add(old(i));
+		}
+		return temp;
+	}
+	
+	//returns a Rail of size n filled with nulls
+		//takes in a ValRail and returns a ValRailBuilder with all the
+	//elements from the VailRail added to it
+	private def getNullRail(n:Int):Rail[Object] {
+		var temp:RailBuilder[Object]! = new RailBuilder[Object](0);
+		for(var i:Int = 0; i < n; i++) {
+			temp.add(null);
+		}
+		return temp.result();
+	}
+
+	//sets the passed in array to the mainArray
+	private proto def setArray(var a:ValRail[Object]):void {
+		mainArray = a;
+	}
+	
+	//returns the main array
+	//global is there to make toSttring():String work
+	global def getArray():ValRail[Object] {
+		return mainArray;
+	}
+
+	//---------------------------------------------------------------------
+	//Constructors
+	//---------------------------------------------------------------------
+	
+	//contructs an empty CopyOnWriteArrayList
+	def this() {
+		var temp:ValRailBuilder[Object]! = new ValRailBuilder[Object](0);
+		setArray(temp.result());
+	}
+
+	//ignoring the second constructor because it uses
+	//Collections and we don't want to worry about that right not
+	def this(c:Collection[Object]!) {
+		elements:ValRail[Object]! = c.toValRail();
+		setArray(elements);
+    }
+	
+	//contructs a CopyOnWriteArrayList with the passed
+	//in ValRail
+	def this(toCopyIn:ValRail[Object]) {
+		setArray(copyOf(toCopyIn));
+	}
+
+	//---------------------------------------------------------------------
+	//Public methods
+	//---------------------------------------------------------------------
+	
+	//returns the current size of the array
+	public def size():Int {
+		return getArray().length;
+	}
+	
+	//returns true if the array is empty, false otherwise
+	public def isEmpty():Boolean {
+		return size()==0;
+	}
+	
+	//returns true if the two objects passed in are equal
+	//returns false otherwise
+	static def eq(o1:Object, o2:Object):Boolean {
+		return (o1==null?o2==null:o1.equals(o2));
+	}
+	
+	//returns the first index of the array where the element is found
+	//that is after or equal to the index value passed in and is before
+	//fence, if it is not found, return -1
+	static def indexOf(o:Object, elements:ValRail[Object], index:Int, fence:Int):Int {
+       if (o == null) {
+           for (var i:Int = index; i < fence; i++)
+               if (elements(i) == null)
+                   return i;
+       } else {
+           for (var i:Int = index; i < fence; i++)
+               if (o.equals(elements(i)))
+                   return i;
+       }
+       return -1;
+   }
+   
+   	//returns the first index of the array where the element is found
+	//that is after or equal to the index value passed in
+	//if it is not found, return -1
+	static def lastIndexOf(o:Object, elements:ValRail[Object], index:Int):Int {
+       if (o == null) {
+           for (var i:Int = index; i >= 0; i--)
+               if (elements(i) == null)
+                   return i;
+       } else {
+           for (var i:Int = index; i >= 0; i--)
+               if (o.equals(elements(i)))
+                   return i;
+       }
+       return -1;
+   }
+   
+   //returns true if the object is contained in this class's mainArray
+   //returns false otherwise
+   public def contains (o:Object):Boolean {
+       elements:ValRail[Object]  = getArray();
+       return indexOf(o, elements, 0, elements.length) >= 0;
+   }
+   
+   //returns the index of the object in this classe's mainArray
+   public def indexOf(o:Object):Int {
+       elements:ValRail[Object] = getArray();
+       return indexOf(o, elements, 0, elements.length);
+   }
+   
+   //returns the first index of the Object that is
+   //greater than or equal to index
+   public def indexOf(index:Int, e:Object):Int {
+       elements:ValRail[Object] = getArray();
+       return indexOf(e, elements, index, elements.length);
+   }
+   
+   //returns the last index of the object in this classe's mainArray
+   public def lastIndexOf(o:Object):Int {
+       elements:ValRail[Object] = getArray();
+       return lastIndexOf(o, elements, elements.length - 1);
+   }
+   
+   //returns the last index of the object that is
+   //before or equal to index
+   public def lastIndexOf(index:Int, e:Object):Int {
+       elements:ValRail[Object] = getArray();
+       return lastIndexOf(e, elements, index);
+   }
+   
+   //skipping clone because there is no clone() method
+   //for objects in x10
+
+	//returns an array implementation of this class
+	def toArray():ValRail[Object] {
+		elements:ValRail[Object] = getArray();
+		return copyOf(elements);
+	}
+	
+	//returns an array implementation of this class
+	//it is stored in the passed in value if it is
+	//large enough, and in a newly created value if
+	//it is not
+	def toArray(a:Rail[Object]!):Rail[Object] {
+       elements:ValRail[Object] = getArray();
+       len:Int = elements.length;
+       if (a.length < len)
+           return copyOf(elements);
+       else {
+           System.copyTo(elements, 0, a, 0, len);
+           if (a.length > len)
+               a(len) = null;
+           return a;
+       }
+   }
+   
+   //returns the element at the given index
+   def get(index:Int):Object {
+       return getArray()(index);
+   }
+   
+   //replaces the element at the specified index
+   //with the new one passed in
+   def set(index:Int, element:Object):Object {
+   	   var newElements:Rail[Object]!;
+       atomic{ //(Should be here, but compiler complains about copyOf line)
+       	elements:ValRail[Object] = getArray();
+			if(index < elements.length && index > -1) {
+    	       oldValue:Object = elements(index);
+		       if (oldValue != element) {
+		           len:Int = elements.length;
+		           newElements = copyOf(elements);
+		           newElements(index) = element;
+		           setArray(newElements);
+		       } else {
+		           // Not quite a no-op; ensures volatile write semantics
+		           setArray(elements);
+		       }
+		       return oldValue;
+       	  }
+       	  return null;
+       }
+   }
+   
+   //This appends the specified element to the end of this list.
+   public atomic def add(e:Object):Boolean {
+         elements:ValRail[Object] = getArray();
+         len:Int = elements.length;
+         newElements:ValRailBuilder[Object]! = getBuilder(elements);
+         newElements.add(e);
+         setArray(newElements.result());
+         return true;
+ }
+ 
+ //This inserts the specified element at the specified position in this
+ //list. Shifts the element currently at that position (if any) and any
+ //subsequent elements to the right (adds one to their indices).
+ atomic def add(index:Int, element:Object):Void {
+           elements:ValRail[Object] = getArray();
+           len:Int = elements.length;
+           if (index > len || index < 0){
+	           throw new ArrayIndexOutOfBoundsException("Index: "+index+", Size; "+len);
+	       } 
+           
+           var newElements:Rail[Object]! = getNullRail(len + 1);
+           numMoved:Int = len - index;
+           if (numMoved == 0) {
+               System.copyTo(elements, 0, newElements, 0, len);
+            }
+           else {
+               System.copyTo(elements, 0, newElements, 0, index);
+               System.copyTo(elements, index, newElements, index + 1,
+                                numMoved);
+           }
+           newElements(index) = element;
+           setArray(newElements);
+   }
+   
+   //This removes the element at the specified position in this list.
+   //Shifts any subsequent elements to the left (subtracts one from their
+   //indices).  Returns the element that was removed from the list.
+   atomic def remove(index:Int):Object {
+           elements:ValRail[Object] = getArray();
+           len:Int = elements.length;
+           
+           if(index < len && index > -1) {
+           oldValue:Object = elements(index);
+           numMoved:Int = len - index - 1;
+           
+           var newElements:Rail[Object]! = getNullRail(len - 1);
+           if (numMoved == 0)
+               System.copyTo(elements, 0, newElements, 0, len - 1);
+           else {
+               System.copyTo(elements, 0, newElements, 0, index);
+               System.copyTo(elements, index + 1, newElements, index, numMoved);
+           }
+           setArray(newElements);
+           return oldValue;
+           }
+           return null;
+   }
+ 
+ 	//This removes the first occurrence of the specified element from this
+ 	//list, if it is present.  If this list does not contain the element,
+ 	//it is unchanged. It returns true if this list contained the specified
+ 	//element (or equivalently, if this list changed as a result of the call).
+ 	public atomic def remove(o:Object):Boolean {
+           elements:ValRail[Object] = getArray();
+           len:Int = elements.length;
+           if (len != 0) {
+               // Copy while searching for element to remove
+               // This wins in the normal case of element being present
+               newlen:Int = len - 1;
+               var newElements:Rail[Object]! = getNullRail(newlen);
+
+               for (var i:Int = 0; i < newlen; ++i) {
+                   if (eq(o, elements(i))) {
+                       // found one;  copy remaining and exit
+                       for (var k:Int = i + 1; k < len; ++k)
+                           newElements(k-1) = elements(k);
+                       setArray(newElements);
+                       return true;
+                   } else
+                       newElements(i) = elements(i);
+               }
+
+               // special handling for last cell
+               if (eq(o, elements(newlen))) {
+                   setArray(newElements);
+                   return true;
+               }
+           }
+           return false;
+   }
+   
+   //This removes from this list all of the elements whose index is between
+   //fromIndex, inclusive, and toIndex, exclusive. Shifts any succeeding
+   //elements to the left (reduces their index). This call shortens the list
+   //by (toIndex - fromIndex) elements.
+    private atomic def removeRange(fromIndex:Int, toIndex:Int):Void {
+	    elements:ValRail[Object] = getArray();
+	    len:Int = elements.length;
+
+	    if (fromIndex < 0 || fromIndex >= len ||
+		toIndex > len || toIndex < fromIndex) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+		newlen:Int = len - (toIndex - fromIndex);
+	    numMoved:Int = len - toIndex;
+	    
+	    var newElements:Rail[Object] = getNullRail(newlen);
+	    if (numMoved == 0)
+	    	System.copyTo(elements, 0, newElements, 0, newlen);
+	    else {
+		System.copyTo(elements, 0, newElements, 0, fromIndex);
+		System.copyTo(elements, toIndex, newElements,
+				 fromIndex, numMoved);
+		setArray(newElements);
+	    }
+    }
+ 
+ 	//This appends the element if not present. 
+ 	public atomic def addIfAbsent(e: Object):Boolean {
+           // Copy while checking if already present.
+           // This wins in the most common case where it is not present
+           elements:ValRail[Object] = getArray();
+           len:Int = elements.length;
+           newElements:Rail[Object]! = getNullRail(len+1);
+           for (var i:Int = 0; i < len; ++i) {
+               if (eq(e, elements(i)))
+                   return false; // exit, throwing away copy
+               else
+                   newElements(i) = elements(i);
+           }
+           newElements(len) = e;
+           setArray(newElements);
+           return true;
+	}
+	
+	//This returns true if this list contains all of the elements of
+	//the specified collection.
+	public def containsAll(c:Container[Object]):Boolean {
+        elements:ValRail[Object] = getArray();
+        len:Int = elements.length;
+		for (e:Object in c) {
+		    if (indexOf(e, elements, 0, len) < 0)
+		        return false;
+		}
+        return true;
+    }
+	
+	//This removes from this list all of its elements that are contained
+	//in the specified collection.
+    public atomic def removeAll(c:Container[Object]!):Boolean {
+	    elements:ValRail[Object] = getArray();
+	    len:Int = elements.length;
+	    if (len != 0) {
+		// temp array holds those elements we know we want to keep
+		var newlen:Int = 0;
+		temp:Rail[Object]! = getNullRail(len);
+		for (var i:Int = 0; i < len; ++i) {
+		    element:Object = elements(i);
+		    if (!c.contains(element))
+			temp(newlen++) = element;
+		}
+		if (newlen != len) {
+			newRail:Rail[Object] = getNullRail(newlen);
+		    System.copyTo(temp,0,newRail,0,newlen);
+		    return true;
+		}
+	    }
+	    return false;
+    }
+	
+	//This retains only the elements in this list that are contained in the
+	//specified collection.  In other words, removes from this list all of
+	//its elements that are not contained in the specified collection.
+	public atomic def retainAll(c:Container[Object]!): Boolean {
+           elements:ValRail[Object] = getArray();
+           var len:Int = elements.length;
+           if (len != 0) {
+               // temp array holds those elements we know we want to keep
+               var newlen:Int = 0;
+               temp:Rail[Object]! = getNullRail(len);
+               for (var i:Int = 0; i < len; ++i) {
+                   element:Object = elements(i);
+                   if (c.contains(element))
+                       temp(newlen++) = element;
+               }
+               if (newlen != len) {
+					newRail:Rail[Object] = getNullRail(newlen);
+					System.copyTo(temp,0,newRail,0,newlen);
+                   return true;
+               }
+           }
+           return false;
+   }
+	
+	//This appends all of the elements in the specified collection that
+	//are not already contained in this list, to the end of this list,
+	//in the order that they are returned by the specified collection's iterator.
+	public atomic def addAllAbsent(c:Collection[Object]!):Int {
+       cs:ValRail[Object] = c.toValRail();
+       if (cs.length == 0)
+           return 0;
+       uniq:Rail[Object]! = getNullRail(cs.length);
+           elements:ValRail[Object] = getArray();
+           len:Int = elements.length;
+           var added:Int = 0;
+           for (var i:Int = 0; i < cs.length; ++i) { // scan for duplicates
+               e:Object = cs(i);
+               if (indexOf(e, elements, 0, len) < 0 &&
+                   indexOf(e, uniq, 0, added) < 0)
+                   uniq(added++) = e;
+           }
+           if (added > 0) {
+               newElements:Rail[Object] = getNullRail(len + added);
+               System.copyTo(elements, 0, newElements, 0, len);
+               System.copyTo(uniq, 0, newElements, len, added);
+               setArray(newElements);
+           }
+           return added;
+   }
+	
+	//This removes all of the elements from this list.
+	public atomic def clear():Void {
+	    setArray(getNullRail(0));
+    }
+    
+	//This appends all of the elements in the specified collection to the end
+	//of this list, in the order that they are returned by the specified
+	//collection's iterator.
+    public atomic def addAll(c:Container[Object]!):Boolean {
+		cs:ValRail[Object] = c.toValRail();
+		if (cs.length == 0)
+			return false;
+			elements:ValRail[Object] = getArray();
+			len:Int = elements.length;
+			newElements:Rail[Object] = getNullRail(len + cs.length);
+			System.copyTo(elements, 0, newElements, 0, len);
+			System.copyTo(cs, 0, newElements, len, cs.length);
+			setArray(newElements);
+			return true;
+    }
+
+    //This inserts all of the elements in the specified collection into
+    //this list, starting at the specified position.  Shifts the element
+    //currently at that position (if any) and any subsequent elements to the
+    //right (increases their indices).  The new elements will appear in this
+    //list in the order that they are returned by the specified collection's
+    //iterator.    
+    public atomic def addAll(index:Int, c:Collection[Object]!): Boolean {
+       cs:ValRail[Object] = c.toValRail();
+           elements:ValRail[Object] = getArray();
+           len:Int = elements.length;
+           if (index > len || index < 0) {
+                   throw new ArrayIndexOutOfBoundsException("Index: "+index+", Size; "+len);
+           }
+           if (cs.length == 0)
+               return false;
+           numMoved:Int = len - index;
+           newElements:Rail[Object] = getNullRail(len + cs.length);
+           if (numMoved == 0)
+               System.copyTo(elements, 0, newElements, 0, len + cs.length);
+           else {
+               System.copyTo(elements, 0, newElements, 0, index);
+               System.copyTo(elements, index, newElements, index + cs.length, numMoved);
+           }
+           System.copyTo(cs, 0, newElements, index, cs.length);
+           setArray(newElements);
+           return true;
+   }
+    
+  //returns the string representation of the object
+    global public safe def toString():String {
+		return getArray().toString();
+    }
+    
+    /*public def equals(o: Object): Boolean {
+	   if (o == this)
+		   return true;
+	   if (!(o instanceof List[Object]))
+		   return false;
+
+	   list:List[Object]! = o as List[Object];
+		val it:Iterator[Object]!;
+		it = list.iterator();
+		elements:ValRail[Object] = getArray();
+		len:Int = elements.length;
+	   for (var i:Int = 0; i < len; ++i)
+		   if (!it.hasNext() || !eq(elements(i), it.next()))
+		       return false;
+	   if (it.hasNext())
+		   return false;
+	   return true;
+	}
+	*/
+	
+	//This returns the hash code value for this list.
+	global public safe def hashCode():Int {
+        var hashCode:Int = 1;
+		elements:ValRail[Object] = getArray();
+		len:Int = elements.length;
+		for (var i:Int = 0; i < len; ++i) {
+			obj:Object = elements(i);
+            hashCode = 31*hashCode + (obj==null ? 0 : obj.hashCode());
+        }
+        return hashCode;
+    }
+    
+    //---------------------------------------------------------------------------------------
+    //unsupported methods to make implementing list work
+    public def indices():List[Int] {
+    	throw new UnsupportedOperationException();
+
+	} 
+    
+    public def addBefore(i:Int, t:Object):Void {
+       	throw new UnsupportedOperationException();
+    }
+       
+    public def removeAt(i:Int):Object {
+       	throw new UnsupportedOperationException();
+
+    }
+
+    public def iteratorFrom(i: Int): ListIterator[Object] {
+         throw new UnsupportedOperationException();
+    }
+     
+	public def removeFirst(): Object {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def removeLast(): Object {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def getFirst(): Object {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def getLast(): Object {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def reverse(): Void {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def sort(): Void {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def sort(cmp:(Object, Object){}=> x10.lang.Int): Void {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def addAllWhere(x10.util.Container[Object]!, (Object){}=> x10.lang.Boolean):Boolean {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def removeAllWhere((Object){}=> x10.lang.Boolean):Boolean {
+		throw new UnsupportedOperationException();
+	}
+    
+    public def clone():Collection[Object] {
+		throw new UnsupportedOperationException();
+	}
+	
+	public def apply(i: Int): Object {
+		throw new UnsupportedOperationException();
+	}
+			 
+	public def toValRail(): ValRail[Object] {
+		throw new UnsupportedOperationException();
+	}
+		 
+	public def toRail(): Rail[Object] {
+		throw new UnsupportedOperationException();
+	}
+		
+	public def set(v: Object, i: int): Object {
+		return null;
+	}
+        
+    /**
+     * Returns an iterator over the elements in this list in proper sequence.
+     *
+     * <p>The returned iterator provides a snapshot of the state of the list
+     * when the iterator was constructed. No synchronization is needed while
+     * traversing the iterator. The iterator does <em>NOT</em> support the
+     * <tt>remove</tt> method.
+     *
+     * @return an iterator over the elements in this list in proper sequence
+     */
+	public def iterator():ListIterator[Object] {
+		return ((new COWIterator(getArray(), 0)) as ListIterator[Object]);
+	}
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The returned iterator provides a snapshot of the state of the list
+     * when the iterator was constructed. No synchronization is needed while
+     * traversing the iterator. The iterator does <em>NOT</em> support the
+     * <tt>remove</tt>, <tt>set</tt> or <tt>add</tt> methods.
+     */
+    public def listIterator():ListIterator[Object] {
+        return new COWIterator(getArray(), 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The returned iterator provides a snapshot of the state of the list
+     * when the iterator was constructed. No synchronization is needed while
+     * traversing the iterator. The iterator does <em>NOT</em> support the
+     * <tt>remove</tt>, <tt>set</tt> or <tt>add</tt> methods.
+     *
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+	public def listIterator(index:Int): ListIterator[Object] {
+       elements: ValRail[Object] = getArray();
+       len:Int = elements.length;
+       if (index<0 || index>len) {
+           throw new ArrayIndexOutOfBoundsException("Index: "+index);
+		}
+       return new COWIterator(elements, index);
+	  }
+
+	
+	private static class COWIterator implements ListIterator[Object] {
+		/** Snapshot of the array **/
+        private snapshot:ValRail[Object];
+        /** Index of element to be returned by subsequent call to next.  */
+        private var cursor:Int;
+
+        private def this(elements:ValRail[Object], initialCursor:Int) {
+            cursor = initialCursor;
+            snapshot = elements;
+        }
+
+        public def hasNext():Boolean {
+            return cursor < snapshot.length;
+        }
+
+        public def hasPrevious():Boolean {
+            return cursor > 0;
+        }
+
+        public def next():Object {
+	    	if (! hasNext()) {
+                throw new NoSuchElementException();
+            }
+	    	return snapshot(cursor++);
+        }
+
+        public def previous():Object {
+	    	if (! hasPrevious()){
+                throw new NoSuchElementException();
+            }
+	    	return snapshot(--cursor);
+        }
+
+        public def nextIndex():Int {
+            return cursor;
+        }
+
+        public def previousIndex():Int {
+            return cursor-1;
+        }
+
+        /**
+         * Not supported. Always throws UnsupportedOperationException.
+         * @throws UnsupportedOperationException always; <tt>remove</tt>
+         *         is not supported by this iterator.
+         */
+        public def remove():Void {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
+         * Not supported. Always throws UnsupportedOperationException.
+         * @throws UnsupportedOperationException always; <tt>set</tt>
+         *         is not supported by this iterator.
+         */
+        public def set(e:Object):Void {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
+         * Not supported. Always throws UnsupportedOperationException.
+         * @throws UnsupportedOperationException always; <tt>add</tt>
+         *         is not supported by this iterator.
+         */
+        public def add(e:Object):Void {
+            throw new UnsupportedOperationException();
+        }
+    }
+	
+
+	 public atomic def subList(fromIndex: Int, toIndex: Int): List[Object] {
+		elements:ValRail[Object] = getArray();
+		len: Int = elements.length;
+		if (fromIndex < 0 || toIndex > len || fromIndex > toIndex)
+		throw new ArrayIndexOutOfBoundsException();
+		return new COWSubList(this, fromIndex, toIndex);
+	}
+
+
+    private static class COWSubList implements List[Object] {
+        private l:CopyOnWriteArrayList!;
+        private offset:Int;
+        private var size:Int;
+        private var expectedArray:ValRail[Object];
+
+        // only call this holding l's lock
+        private def this(list:CopyOnWriteArrayList!, fromIndex:Int, toIndex:Int) {
+            l = list;
+            expectedArray = list.getArray();
+            offset = fromIndex;
+            size = toIndex - fromIndex;
+        }
+
+        // only call this holding l's lock
+        private def checkForComodification():Void {
+            if (l.getArray() != expectedArray)
+            	throw new UnsupportedOperationException();
+            return;
+        }
+
+        // only call this holding l's lock
+        private def rangeCheck(index:Int):Void {
+            if (index<0 || index>=size)
+            	throw new ArrayIndexOutOfBoundsException("Index: "+index+" Size: "+size);
+			return;
+        }
+
+		public atomic def set(index: Int, element: Object): Object {
+        	rangeCheck(index);
+        	checkForComodification();
+        	x: Object = l.set(index+offset, element);
+        	expectedArray = l.getArray();
+        	return x;
+		}
+
+		public atomic def get(index: Int): Object {
+			rangeCheck(index);
+			checkForComodification();
+			return l.get(index+offset);
+		}
+
+		public atomic def size(): Int {
+			checkForComodification();
+			return size;
+		}
+
+		public atomic def add(index: Int, element: Object): Void {
+			checkForComodification();
+			if (index<0 || index>size)
+				throw new ArrayIndexOutOfBoundsException();
+			l.add(index+offset, element);
+			expectedArray = l.getArray();
+			size++;
+       }
+       
+		public atomic def clear():Void {
+			checkForComodification();
+			l.removeRange(offset, offset+size);
+			expectedArray = l.getArray();
+			size = 0;
+		}
+
+		public atomic def remove(index:Int):Object {
+			rangeCheck(index);
+			checkForComodification();
+			result:Object = l.remove(index+offset);
+			expectedArray = l.getArray();
+			size--;
+			return result;
+		}
+
+		public atomic def iterator(): ListIterator[Object] {
+			checkForComodification();
+			return new COWSubListIterator( (l as List[Object]), 0, offset, size);
+		}
+
+		public atomic def listIterator(index: Int): ListIterator[Object] {
+			checkForComodification();
+			if (index<0 || index>size) {
+				throw new ArrayIndexOutOfBoundsException("Index: "+index+", Size: "+size);
+			}
+			return new COWSubListIterator( (l as List[Object]), index, offset, size);
+		}
+
+		public atomic def subList(fromIndex: Int, toIndex: Int): List[Object] {
+			checkForComodification();
+			if (fromIndex<0 || toIndex>size) {
+				throw new ArrayIndexOutOfBoundsException();
+			}
+			return new COWSubList(l, fromIndex + offset, toIndex + offset);
+		}
+       
+		public def indices():List[Int] {
+			throw new UnsupportedOperationException();
+		} 
+       
+		public def addBefore(i:Int, t:Object):Void {
+			throw new UnsupportedOperationException();
+		}
+       
+		public def removeAt(i:Int):Object {
+			throw new UnsupportedOperationException();
+		}
+       
+		public def indexOf(t:Object):Int {
+			return l.indexOf(t);
+		}
+       
+		public def lastIndexOf(t:Object):Int {
+			return l.lastIndexOf(t);
+		}
+       
+		public def indexOf(i:Int, t:Object):Int {
+			return l.indexOf(i, t);
+		}
+       
+		public def lastIndexOf(i:Int, t:Object):Int {
+			return l.lastIndexOf(i, t);
+		}
+       
+		public def iteratorFrom(i: Int): ListIterator[Object] {
+			throw new UnsupportedOperationException();
+		}
+     
+		public def removeFirst(): Object {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def removeLast(): Object {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def getFirst(): Object {
+			throw new UnsupportedOperationException();
+		}
+
+		public def getLast(): Object {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def reverse(): Void {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def sort(): Void {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def sort(cmp:(Object, Object){}=> x10.lang.Int): Void {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def add(o:Object):Boolean {
+			return l.add(o);
+		}
+		
+		public def remove(o:Object):Boolean {
+			return l.remove(o);
+		}
+		
+		public def addAll(o:Container[Object]!):Boolean {
+			return l.addAll(o);
+		}
+		
+		public def retainAll(o:Container[Object]!):Boolean {
+			return l.retainAll(o);
+		}
+		
+		public def removeAll(o:Container[Object]!):Boolean {
+			return l.removeAll(o);
+		}
+		
+		public def addAllWhere(x10.util.Container[Object]!, (Object){}=> x10.lang.Boolean):Boolean {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def removeAllWhere((Object){}=> x10.lang.Boolean):Boolean {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def clone():Collection[Object] {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def apply(i: Int): Object {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def isEmpty(): Boolean {
+			return l.isEmpty();
+		}
+		 
+		public def contains(o: Object): Boolean {
+			return l.contains(o);
+		}
+		 
+		public def toValRail(): ValRail[Object] {
+			throw new UnsupportedOperationException();
+		}
+		 
+		public def toRail(): Rail[Object] {
+			throw new UnsupportedOperationException();
+		}
+		
+		public def containsAll(o: Container[Object]): Boolean {
+			return l.containsAll(o);
+		}
+		
+		public def set(v: Object, i: int): Object {
+		    return null;
+		}
+    }
+    
+    private static class COWSubListIterator implements ListIterator[Object] {
+       private i: ListIterator[Object]!;
+       private index: Int;
+       private offset: Int;
+       private size: Int;
+       
+       private def this(l: List[Object]!, index: Int, offset: Int, size: Int) {
+           this.index = index;
+           this.offset = offset;
+           this.size = size;
+           i = (l as CopyOnWriteArrayList).listIterator(index+offset);
+       }
+
+       public def hasNext(): Boolean {
+           return nextIndex() < size;
+       }
+
+       public def next(): Object {
+           if (hasNext())
+               return i.next();
+           else {
+               throw new NoSuchElementException();
+           }
+       }
+
+       public def hasPrevious():Boolean {
+           return previousIndex() >= 0;
+       }
+
+       public def previous(): Object {
+           if (hasPrevious())
+               return i.previous();
+           else {
+               throw new NoSuchElementException();
+       		}
+       	}
+
+       public def nextIndex(): Int {
+           return i.nextIndex() - offset;
+       }
+
+       public def previousIndex(): Int {
+           return i.previousIndex() - offset;
+       }
+
+       public def remove(): Void {
+           throw new UnsupportedOperationException();
+       }
+
+       public def set(e:Object): Void {
+           throw new UnsupportedOperationException();
+       }
+
+       public def add(e: Object): Void {
+           throw new UnsupportedOperationException();
+       }
+   }
+}

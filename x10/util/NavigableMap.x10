@@ -1,0 +1,134 @@
+package x10.util;
+import x10.util.*;
+
+/**
+ * A SortedMap extended with navigation methods returning the closest matches for give search targets.
+ * 
+ * Parameters for the interface:
+ * <K> the type of keys maintained by this map
+ * <V> the type of mapped values
+ *
+ * Authors:
+ * Vincent Ying
+ * Jessica Wang
+ * UCLA CS130 Winter 2010
+ * 
+ * Class/Comments Reference:
+ * openjdk-6-src-b18-16_feb_2010
+ */
+
+public interface NavigableMap[K,V] extends SortedMap[K,V] {
+	/*
+	 * Returns a key-value mapping associated with the greatest key strictly less 
+	 * than the given key, or null if there is no such key.
+	 */
+    	def lowerEntry(key: K) : Map.Entry[K,V];
+	
+	/*
+	 * Returns the greatest key strictly less than the given key, or null if there is no such key.
+	 */	
+    	def lowerKey(key: K) : Box[K];
+
+	/*
+	 * Returns a key-value mapping associated with the greatest key less than or equal 
+	 * to the given key, or null if there is no such key.
+	 */
+    	def floorEntry(key: K) : Map.Entry[K,V];
+
+	/*
+ 	 * Returns the greatest key less than or equal to the given key, or null if there is no such key.
+	 */
+    	def floorKey(key: K) : Box[K];
+	
+	/*
+	 * Returns a key-value mapping associated with the least key greater than 
+	 * or equal to the given key, or null if there is no such key.
+	 */
+    	def ceilingEntry(key: K) : Map.Entry[K,V];
+
+	/*
+	 * Returns the least key greater than or equal to the given key, or null if there is no such key.
+	 */    
+	def ceilingKey(key: K) : Box[K];
+
+	/*
+	 * Returns a key-value mapping associated with the least key strictly greater 
+	 * than the given key, or null if there is no such key.
+	 */
+    	def higherEntry(key: K) : Map.Entry[K,V];
+
+	/*
+	 * Returns the least key strictly greater than the given key, or null if there is no such key.
+	 */
+    	def higherKey(key: K) : Box[K];
+
+	/*
+	 * Returns a key-value mapping associated with the least key in this map, or null if the map is empty.
+	 */
+    	def firstEntry() : Map.Entry[K,V];
+
+	/* 
+	 * Returns a key-value mapping associated with the greatest key in this map, or null if the map is empty.
+	 */
+    	def lastEntry() : Map.Entry[K,V];
+
+	/*
+	 * Removes and returns a key-value mapping associated with the least key 
+	 * in this map, or null if the map is empty.
+	 */
+    	def pollFirstEntry() : Map.Entry[K,V];
+
+	/*
+	 * Removes and returns a key-value mapping associated with the greatest 
+	 * key in this map, or null if the map is empty.
+	 */
+	def pollLastEntry() : Map.Entry[K,V];
+    
+	/*
+	 * Returns a reverse order view of the mappings contained in this map.
+	 */	
+	def descendingMap() : NavigableMap[K,V];
+
+	/*
+	 * Returns a NavigableSet view of the keys contained in this map.
+	 */	
+    	def navigableKeySet() : NavigableSet[K];
+
+	/*
+	 * Returns a reverse order NavigableSet view of the keys contained in this map.
+	 */
+    	def descendingKeySet() : NavigableSet[K];
+
+	/*
+	 * Returns a view of the portion of this map whose keys range from fromKey to toKey.
+	 */
+    	def subMap(fromKey: K, fromInclusive: Boolean, toKey: K, toInclusive: Boolean) : NavigableMap[K,V];
+
+	/*
+	 * Returns a view of the portion of this map whose keys are 
+	 * less than (or equal to, if inclusive is true) toKey.	
+	 */
+    	def headMap(toKey: K, inclusive: Boolean) : NavigableMap[K,V];
+
+	/*
+	 * Returns a view of the portion of this map whose keys are 
+	 * greater than (or equal to, if inclusive is true) fromKey.
+	 */
+    	def tailMap(fromKey: K, inclusive: Boolean) : NavigableMap[K,V];
+
+	/*
+	 * Returns a view of the portion of this map whose keys range from fromKey, inclusive, to toKey, exclusive.
+	 */	
+    	def subMap(fromKey: K, toKey: K) : SortedMap[K,V];
+    
+	/*
+	 * Returns a view of the portion of this map whose keys are strictly less than toKey.
+	 */	
+	def headMap(toKey: K) : SortedMap[K,V];
+
+	/*
+	 * Returns a view of the portion of this map whose keys are greater than or equal to fromKey.
+	 */
+    	def tailMap(fromKey: K) : SortedMap[K,V];
+}
+
